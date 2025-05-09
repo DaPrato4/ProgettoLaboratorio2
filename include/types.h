@@ -50,7 +50,7 @@ typedef struct {
  * Specifica il tipo e il numero di soccorritori necessari
  */
 typedef struct {
-    struct rescuer_type_s* type;    // Tipo di soccorritore richiesto
+    rescuer_type_t* type;    // Tipo di soccorritore richiesto
     int required_count;             // Numero di soccorritori necessari
     int time_to_manage;             // Tempo necessario per gestire l'emergenza
 } rescuer_request_t;

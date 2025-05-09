@@ -88,7 +88,7 @@ int parse_emergency_type_line(
 
         // Alloca e popola la richiesta
         rescuer_request_t req;
-        req.type = (struct rescuer_type_s*)rescuer_type_ptr;
+        req.type = rescuer_type_ptr;
         req.required_count = required_count;
         req.time_to_manage = time_to_manage;
         rescuers[rescuer_count++] = req;
