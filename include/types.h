@@ -3,6 +3,7 @@
 
 #include <time.h>
 #define EMERGENCY_NAME_LENGTH 64
+#define MAX_QUEUE_NAME 16
 
 
 //TIPI E ISTANZE DI SOCCORRITORI
@@ -116,5 +117,10 @@ typedef struct {
     int count;                      // Numero di soccorritori
 } rescuer_type_info_t;
 
+typedef struct {
+    char queue[MAX_QUEUE_NAME];
+    int height;
+    int width;
+} env_config_t;
 
 #endif // TYPES_H

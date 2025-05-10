@@ -1,11 +1,27 @@
 #include "../include/types.h"
 #include "../include/parser_emergency.h"
 #include "../include/parser_rescuers.h"
+#include "../include/parser_env.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 int main() {
+    //parsing dell'ambiente
+    env_config_t env_config;
+    if (load_env_config("./conf/env.conf", &env_config) != 0) {
+        fprintf(stderr, "Errore nel caricamento della configurazione dell'ambiente\n");
+        return 1;
+    }
+    printf("Configurazione dell'ambiente:\n");
+    printf("Coda: %s\n", env_config.queue);
+    printf("Altezza: %d\n", env_config.height);
+    printf("Larghezza: %d\n", env_config.width);
+    printf("Caricamento della configurazione dell'ambiente completato.\n\n\n\n");
+
+
+    
+
     // parsing dei soccorritori
     rescuer_type_info_t* rescuer_types;
     int rescuer_count;
@@ -32,12 +48,6 @@ int main() {
     emergency_type_t* emergency_types;
     int emergency_count;
     load_emergency_types("./conf/emergency_types.conf", &emergency_types, &emergency_count, known_types, known_types_count);
-
-
-
-
-
-    
 
     // Stampa le emergenze caricate
     printf("\n\n\nEmergenze caricate:\n");
