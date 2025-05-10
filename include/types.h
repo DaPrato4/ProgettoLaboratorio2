@@ -110,4 +110,11 @@ typedef struct {
     rescuer_digital_twin_t* rescuers_dt;       ///< Puntatore all’elenco dei soccorritori assegnati
 } emergency_t;
 
+//AGGIUNTI
+typedef struct {
+    rescuer_type_t rescuer_type;    // Tipo di soccorritore
+    int count;                      // Numero di soccorritori
+} rescuer_type_info_t;
+
+
 #endif // TYPES_H
