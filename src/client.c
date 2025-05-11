@@ -53,6 +53,35 @@ int main(int argc, char* argv[]) {
     // Modalità da file DA INSERIRE
     if (argc == 3 && strcmp(argv[1], "-f") == 0) {
         printf("📂 Apertura file: %s\n", argv[2]);
+        FILE* file = fopen(argv[2], "r");
+        if (!file) {
+            perror("fopen");
+            mq_close(mq);
+            return 1;
+        }
+        printf("📂 File aperto correttamente.\n");
+
+        char line[256];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            // Rimuove il carattere di nuova linea
+            line[strcspn(line, "\n")] = 0;
+            char name[MAX_NAME_LEN];
+            int x, y, delay;
+            int name_end = 0;
+            while(!isdigit(line[name_end])) {
+                name_end++;
+            }
+            strncpy(name, line, name_end);
+            name[name_end-1] = '\0';
+            if(sscanf(line + name_end, "%d %d %d", &x, &y, &delay) == 3) {
+                send_emergency(name, x, y, delay, mq);
+            } else {
+                fprintf(stderr, "❌ Riga ignorata (formato errato): %s\n", line);
+                return 1;
+            }
+        }
+
+        fclose(file);
     }
 
     // Modalità singola
