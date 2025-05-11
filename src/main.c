@@ -1,11 +1,13 @@
-#include "../include/types.h"
-#include "../include/parser_emergency.h"
-#include "../include/parser_rescuers.h"
-#include "../include/parser_env.h"
-#include "../include/emergency_queue.h"
+#include "types.h"
+#include "parser_emergency.h"
+#include "parser_rescuers.h"
+#include "parser_env.h"
+#include "emergency_queue.h"
+#include "mq_receiver.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 int main() {
     //parsing dell'ambiente
@@ -77,6 +79,11 @@ int main() {
     printf("Emergenza ottenuta dalla coda: %d\n", emergenza4.status); // Stampa l'emergenza ottenuta
 
 
+    //PROVE MQ
+    printf("\n\n\nAvvio del thread ricevitore della coda...\n");
+    pthread_t mq_thread;
+    start_mq_receiver_thread(emergency_types,emergency_count, env_config.queue , &mq_thread); // Avvia il thread per ricevere le emergenze dalla coda
+    pthread_join(mq_thread, NULL); // Attende la fine del thread ricevitore
 
     // Ricorda di liberare la memoria allocata
 }
