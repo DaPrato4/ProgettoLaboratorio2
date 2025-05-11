@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Iinclude
-SRC = src/main.c src/parser_emergency.c src/parser_env.c src/parser_rescuers.c
+SRC = src/main.c src/parser_emergency.c src/parser_env.c src/parser_rescuers.c src/emergency_queue.c
 OBJ = $(SRC:.c=.o)
 TARGET = eseguibile.o
 
