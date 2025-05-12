@@ -34,6 +34,8 @@ void* scheduler_thread_fun(void* arg) {
             }
             digital_twins_selected = temp;
 
+            //aggungo qui le prove
+            
             // 3. Cerca i soccorritori disponibili
             for (int j = 0; j < rescuer_count && needed > 0; j++) {
                 rescuer_digital_twin_t* r = rescuers[j].twin;
@@ -41,7 +43,6 @@ void* scheduler_thread_fun(void* arg) {
                 // Cerca un soccorritore del tipo richiesto, libero
                 if (r->status == IDLE &&
                     strcmp(r->rescuer->rescuer_type_name, req.type->rescuer_type_name) == 0) {
-
                         digital_twins_selected[assigned] = r; // Salva il soccorritore selezionato
                         assigned++;
                         needed--;
@@ -57,7 +58,7 @@ void* scheduler_thread_fun(void* arg) {
                 e.status = TIMEOUT;
                 emergency_queue_add(e); // la reinserisci in coda come TIMEOUT
                 free(digital_twins_selected); // libera memoria
-                sleep(1); // evita ciclo infinito e stress alla CPU
+                //sleep(1); // evita ciclo infinito e stress alla CPU
                 break; // riprendi dal ciclo while
             }
 
@@ -81,6 +82,7 @@ void* scheduler_thread_fun(void* arg) {
                 pthread_mutex_lock(&rescuers[r->id].mutex);
                 r->status = EN_ROUTE_TO_SCENE;
                 printf("🆕 [SCHEDULER] Twin ID %d (addr: %p) aggiornato a stato %d\n", r->id, (void*)r, r->status);
+                rescuers[r->id].current_em = &e;
                 pthread_mutex_unlock(&rescuers[r->id].mutex);
                 pthread_cond_signal(&rescuers[r->id].cond);
             }

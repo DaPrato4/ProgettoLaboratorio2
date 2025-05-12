@@ -124,11 +124,17 @@ typedef struct {
     int width;
 } env_config_t;
 
+
+/**
+ * @brief Struttura che rappresenta un soccorritore in un thread
+ * Contiene il gemello digitale del soccorritore e le informazioni sul thread
+ */
 typedef struct {
     rescuer_digital_twin_t* twin;     // Gemello digitale originale
     pthread_mutex_t mutex;            // Mutex personale
     pthread_cond_t cond;              // Condition var personale
     pthread_t thread;                 // Thread associato
+    emergency_t* current_em;     // Emergenza corrente
 } rescuer_thread_t;
 
 #endif // TYPES_H
