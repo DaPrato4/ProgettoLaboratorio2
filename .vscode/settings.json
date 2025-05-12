@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "parser_rescuers.h": "c"
+        "parser_rescuers.h": "c",
+        "stdio.h": "c"
     }
 }

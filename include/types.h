@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <time.h>
+#include <pthread.h>
 #define EMERGENCY_NAME_LENGTH 64
 #define MAX_QUEUE_NAME 16
 
@@ -122,5 +123,12 @@ typedef struct {
     int height;
     int width;
 } env_config_t;
+
+typedef struct {
+    rescuer_digital_twin_t* twin;     // Gemello digitale originale
+    pthread_mutex_t mutex;            // Mutex personale
+    pthread_cond_t cond;              // Condition var personale
+    pthread_t thread;                 // Thread associato
+} rescuer_thread_t;
 
 #endif // TYPES_H
