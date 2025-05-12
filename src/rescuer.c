@@ -15,6 +15,8 @@ void* rescuer_thread(void* arg) {
         // Aspetta di essere assegnato
         while (r->status == IDLE) {
             pthread_cond_wait(&wrapper->cond, &wrapper->mutex);
+            printf("🤷🤷[RESCUER %d] RISVEGLIATO (Twin addr: %p) con stato %d😢😲🤑\n", r->id, (void*)r, r->status);
+
         }
 
         pthread_mutex_unlock(&wrapper->mutex);
@@ -24,7 +26,7 @@ void* rescuer_thread(void* arg) {
             r->rescuer->rescuer_type_name, r->id, r->x, r->y);
 
         // qui dovrà essere calcolato il tempo di intervento in cui stare on rout on scee e returning to base
-        sleep(3); // Simula il tempo di intervento (3 secondi)
+        sleep(5); // Simula il tempo di intervento (3 secondi)
 
         // Completa e torna IDLE
         pthread_mutex_lock(&wrapper->mutex);
@@ -36,12 +38,8 @@ void* rescuer_thread(void* arg) {
     return NULL;
 }
 
-void start_rescuers(rescuer_thread_t* rescuers, rescuer_digital_twin_t* twins, int rescuers_count) {
-    for (int i = 0; i < rescuers_count; i++) {
-        rescuers[i].twin = &twins[i];
-        pthread_mutex_init(&rescuers[i].mutex, NULL);
-        pthread_cond_init(&rescuers[i].cond, NULL);
-        pthread_create(&rescuers[i].thread, NULL, rescuer_thread, &rescuers[i]);
-    }
-    
+void start_rescuer(rescuer_thread_t* rescuer_wrapped) {
+    pthread_mutex_init(&rescuer_wrapped->mutex, NULL);
+    pthread_cond_init(&rescuer_wrapped->cond, NULL);
+    pthread_create(&rescuer_wrapped->thread, NULL, rescuer_thread, rescuer_wrapped);
 }

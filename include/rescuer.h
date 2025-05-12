@@ -9,6 +9,5 @@
  * @param rescuers Array di soccorritori digitali
  * @param count Numero totale di soccorritori
  */
-void start_rescuers(rescuer_thread_t* rescuers, rescuer_digital_twin_t* twins, int rescuers_count);
-
+void start_rescuer(rescuer_thread_t* rescuer_wrapped);
 #endif // RESCUER_H

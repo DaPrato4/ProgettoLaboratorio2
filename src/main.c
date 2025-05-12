@@ -5,6 +5,7 @@
 #include "emergency_queue.h"
 #include "mq_receiver.h"
 #include "rescuer.h"
+#include "scheduler.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +72,8 @@ int main() {
     }
 
     int idx = 0;
-    rescuer_thread_t* rescuers_twin_thread = malloc(total_rescuers * sizeof(rescuer_thread_t));
+    // Alloca un array di strutture rescuer_thread_t per gestire i thread dei digital twin dei soccorritori
+    rescuer_thread_t* rescuers_twin_thread = malloc(total_rescuers * sizeof(rescuer_thread_t)); 
     for (int i = 0; i < rescuer_count; ++i) {
         for (int j = 0; j < rescuer_types_info[i].count; ++j) {
             rescuers_twin_thread[idx].twin = malloc(sizeof(rescuer_digital_twin_t));
@@ -80,7 +82,8 @@ int main() {
             rescuers_twin_thread[idx].twin->y = rescuer_types_info[i].rescuer_type.y;
             rescuers_twin_thread[idx].twin->rescuer = &rescuer_types_info[i].rescuer_type;
             rescuers_twin_thread[idx].twin->status = IDLE;
-            start_rescuers(&rescuers_twin_thread[idx], rescuers_twin_thread[idx].twin, total_rescuers); // Avvia il thread del soccorritore
+
+            start_rescuer(&rescuers_twin_thread[idx]); // Avvia il thread del soccorritore
             idx++;
         }
     }
@@ -99,6 +102,7 @@ int main() {
         }
 
 
+        
     //------PROVE CODA------
     emergency_queue_init(); // Inizializza la coda delle emergenze
     emergency_t emergenza1 = { .type = emergency_types[0], .status = WAITING, .x = 10, .y = 20, .time = time(NULL), .rescuer_count = 0, .rescuers_dt = NULL };
@@ -116,8 +120,16 @@ int main() {
     printf("\n\n\nAvvio del thread ricevitore della coda...\n");
     pthread_t mq_thread;
     start_mq_receiver_thread(emergency_types,emergency_count, env_config.queue , &mq_thread); // Avvia il thread per ricevere le emergenze dalla coda
-    pthread_join(mq_thread, NULL); // Attende la fine del thread ricevitore
+    //pthread_join(mq_thread, NULL); // Attende la fine del thread ricevitore
 
+
+    //------SCHEDULER------
+    scheduler_args_t* args = malloc(sizeof(scheduler_args_t));
+    args->rescuer_count = total_rescuers;
+    args->rescuers = rescuers_twin_thread; // Passa i soccorritori al thread scheduler
+    pthread_t scheduler_thread;
+    pthread_create(&scheduler_thread, NULL, scheduler_thread_fun, args);
+    pthread_join(scheduler_thread, NULL); // Attende la fine del thread scheduler
 
     // Ricorda di liberare la memoria allocata
 }

@@ -1,6 +1,7 @@
 #include "types.h"
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 // Numero massimo di emergenze che la coda può contenere
 #define MAX_EMERGENCIES 100
@@ -53,8 +54,6 @@ void emergency_queue_add(emergency_t e) {
     tail = (tail + 1) % MAX_EMERGENCIES; // Gestione circolare dell'indice
     count++;                             // Incrementa il conteggio degli elementi
 
-    pthread_cond_signal(&queue_not_empty); // Notifica i thread in attesa che la coda non è più vuota
-    pthread_mutex_unlock(&queue_mutex);    // Rilascia il mutex
 
     //stampa la coda
     printf("[queue] Aggiunta emergenza: %s (%d,%d)\n", e.type.emergency_desc, e.x, e.y);
@@ -72,6 +71,10 @@ void emergency_queue_add(emergency_t e) {
         printf("[queue] [rescuer_dt] %p\n", emergency_queue[index].rescuers_dt);
         printf("[queue] ------------------------\n");
     }
+
+    
+    pthread_cond_signal(&queue_not_empty); // Notifica i thread in attesa che la coda non è più vuota
+    pthread_mutex_unlock(&queue_mutex);    // Rilascia il mutex
 }
 
 /**
@@ -94,9 +97,9 @@ emergency_t emergency_queue_get() {
     emergency_t e;
     short max_priority = -1;
     int max_index = -1;
-    for (int i = 0; i < count; i = (i + 1) % MAX_EMERGENCIES){
+    for (int i = 0; i < count; i++){
         int index = (head + i) % MAX_EMERGENCIES; // Calcola l'indice circolare
-        if(emergency_queue[index].type.priority > max_priority){
+        if(emergency_queue[index].type.priority > max_priority && emergency_queue[index].status == WAITING) {
             max_priority = emergency_queue[index].type.priority;
             max_index = index;
         }
@@ -104,11 +107,18 @@ emergency_t emergency_queue_get() {
     if (max_index != -1) {
         e = emergency_queue[max_index]; // Estrae l'emergenza con priorità più alta
         // Rimuove l'emergenza dalla coda
-        for (int i = max_index; i < tail - 1; i++) {
-            emergency_queue[i] = emergency_queue[i + 1];
+        for (int i = max_index; i != tail; i = (i + 1) % MAX_EMERGENCIES) {
+            int next = (i + 1) % MAX_EMERGENCIES;
+            if (next != tail)
+                emergency_queue[i] = emergency_queue[next];
         }
         tail = (tail - 1 + MAX_EMERGENCIES) % MAX_EMERGENCIES; // Gestione circolare dell'indice
         count--; // Decrementa il conteggio degli elementi
+    }else {
+        // Nessuna emergenza con status WAITING trovata → aspetta ancora
+        pthread_mutex_unlock(&queue_mutex);
+        sleep(1); // o usleep(200000);
+        return emergency_queue_get(); // tenta di nuovo ricorsivamente
     }
     pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex
     return e;                            // Restituisce l'emergenza estratta

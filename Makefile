@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Iinclude
 
-SRC_MAIN = src/main.c src/parser_emergency.c src/parser_env.c src/parser_rescuers.c src/emergency_queue.c src/mq_receiver.c src/rescuer.c
+SRC_MAIN = src/main.c src/parser_emergency.c src/parser_env.c src/parser_rescuers.c src/emergency_queue.c src/mq_receiver.c src/rescuer.c src/scheduler.c
 SRC_CLIENT = src/client.c src/parser_env.c
 
 OBJ_MAIN = $(SRC_MAIN:.c=.o)
