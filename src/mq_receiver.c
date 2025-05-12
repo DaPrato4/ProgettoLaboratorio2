@@ -21,10 +21,11 @@ void* mq_receiver_thread(void* arg) {
     mqd_t mq;
     emergency_request_t req;
 
+    // Estrae gli argomenti passati al thread dalla struttura mq_receiver_args
     struct mq_receiver_args* args = (struct mq_receiver_args*)arg;
-    emergency_type_t* emergency_types = args->emergency_types;
-    int emergency_count = args->emergency_count;
-    char* queue_name = (char*)args->queue_name;
+    emergency_type_t* emergency_types = args->emergency_types; // Array dei tipi di emergenza
+    int emergency_count = args->emergency_count;               // Numero di tipi di emergenza
+    char* queue_name = (char*)args->queue_name;                // Nome della coda dei messaggi
     free(arg); // Libera la memoria allocata per gli argomenti
     printf("[MQ] Avvio thread ricevitore coda: ----  %s  ----\n", queue_name);
 
@@ -59,11 +60,13 @@ void* mq_receiver_thread(void* arg) {
                 printf("✅ Tipo di emergenza riconosciuto: %s\n", req.emergency_name);
                 emergency_t em;
                 memset(&em, 0, sizeof(em)); // Inizializza la struttura emergency_t a zero
-                em.type = emergency_types[i]; // Associa il tipo di emergenza (da definire)
+                em.type = emergency_types[i]; // Associa il tipo di emergenza
                 em.x = req.x;
                 em.y = req.y;
                 em.time = req.timestamp;
-                em.status = WAITING;
+                em.status = WAITING;                
+                em.rescuer_count = emergency_types[i].rescuers_req_number;
+                em.rescuers_dt = malloc(em.rescuer_count * sizeof(rescuer_digital_twin_t));
 
                 emergency_queue_add(em);    // Aggiunge l'emergenza alla coda interna
             }

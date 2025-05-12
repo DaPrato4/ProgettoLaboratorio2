@@ -55,6 +55,23 @@ void emergency_queue_add(emergency_t e) {
 
     pthread_cond_signal(&queue_not_empty); // Notifica i thread in attesa che la coda non è più vuota
     pthread_mutex_unlock(&queue_mutex);    // Rilascia il mutex
+
+    //stampa la coda
+    printf("[queue] Aggiunta emergenza: %s (%d,%d)\n", e.type.emergency_desc, e.x, e.y);
+    printf("[queue] Coda attuale: %d emergenze\n", count);
+    for (int i = 0; i < count; i++) {
+        int index = (head + i) % MAX_EMERGENCIES;
+        printf("[queue] [%d] %s (%d,%d)\n", i, emergency_queue[index].type.emergency_desc, emergency_queue[index].x, emergency_queue[index].y);
+        //stampa tutti i dati dell'emergenza
+        printf("[queue] [emergenza] %s\n", emergency_queue[index].type.emergency_desc);
+        printf("[queue] [status] %d\n", emergency_queue[index].status);
+        printf("[queue] [x] %d\n", emergency_queue[index].x);
+        printf("[queue] [y] %d\n", emergency_queue[index].y);
+        printf("[queue] [time] %ld\n", emergency_queue[index].time);
+        printf("[queue] [rescuer_count] %d\n", emergency_queue[index].rescuer_count);
+        printf("[queue] [rescuer_dt] %p\n", emergency_queue[index].rescuers_dt);
+        printf("[queue] ------------------------\n");
+    }
 }
 
 /**
@@ -73,11 +90,26 @@ emergency_t emergency_queue_get() {
         pthread_cond_wait(&queue_not_empty, &queue_mutex); // Attende una segnalazione
     }
 
-    // Estrae l'emergenza dalla testa della coda e aggiorna l'indice di head
-    emergency_t e = emergency_queue[head];
-    head = (head + 1) % MAX_EMERGENCIES; // Gestione circolare dell'indice
-    count--;                             // Decrementa il conteggio degli elementi
-
+    // Estrae l'emergenza con priorità più alta
+    emergency_t e;
+    short max_priority = -1;
+    int max_index = -1;
+    for (int i = 0; i < count; i = (i + 1) % MAX_EMERGENCIES){
+        int index = (head + i) % MAX_EMERGENCIES; // Calcola l'indice circolare
+        if(emergency_queue[index].type.priority > max_priority){
+            max_priority = emergency_queue[index].type.priority;
+            max_index = index;
+        }
+    }
+    if (max_index != -1) {
+        e = emergency_queue[max_index]; // Estrae l'emergenza con priorità più alta
+        // Rimuove l'emergenza dalla coda
+        for (int i = max_index; i < tail - 1; i++) {
+            emergency_queue[i] = emergency_queue[i + 1];
+        }
+        tail = (tail - 1 + MAX_EMERGENCIES) % MAX_EMERGENCIES; // Gestione circolare dell'indice
+        count--; // Decrementa il conteggio degli elementi
+    }
     pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex
     return e;                            // Restituisce l'emergenza estratta
 }
