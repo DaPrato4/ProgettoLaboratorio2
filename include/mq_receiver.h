@@ -13,6 +13,6 @@
  * @param queue_name Il nome della coda da cui ricevere le emergenze.
  * @param thread Il puntatore al thread che verrà creato.
  */
-void start_mq_receiver_thread(emergency_type_t emergency_types[], int emergency_count, char* queue_name, pthread_t* thread);
+void start_mq_receiver_thread(emergency_type_t emergency_types[], int emergency_count, env_config_t* env_data, pthread_t* thread);
 
 #endif // MQ_RECEIVER_H

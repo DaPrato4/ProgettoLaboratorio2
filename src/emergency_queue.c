@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "logger.h"
 
 // Numero massimo di emergenze che la coda può contenere
 #define MAX_EMERGENCIES 100
@@ -45,9 +46,20 @@ void emergency_queue_add(emergency_t e) {
     // Controlla se la coda è piena
     if (count == MAX_EMERGENCIES) {
         fprintf(stderr, "[queue] Errore: coda piena, emergenza scartata!\n");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: coda piena, emergenza scartata!");
+        char id [3];
+        snprintf(id, sizeof(id), "%d", e.id);
+        log_event(id, "MESSAGE_QUEUE", log_msg); // Logga lo scarto dell'emergenza
         pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex prima di uscire
         return;
     }
+
+    char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente aggiunta alla coda", e.type.emergency_desc);
+        char id [3];
+        snprintf(id, sizeof(id), "%d", e.id);
+        log_event(id, "MESSAGE_QUEUE", log_msg); // Logga L'aggiunta dell'emergenza
 
     // Inserisce l'emergenza in coda e aggiorna l'indice di tail
     emergency_queue[tail] = e;

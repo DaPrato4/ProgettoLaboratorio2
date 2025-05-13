@@ -30,28 +30,48 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
     // Parsing nome soccorritore: prima coppia di parentesi quadre
     char* name_start = strchr(buffer, '[');
     char* name_end = strchr(buffer, ']');
-    if (!name_start || !name_end || name_end <= name_start) return -1;
+    if (!name_start || !name_end || name_end <= name_start) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("112", "FILE_PARSING", log_msg);
+        return -1;
+    }
     *name_end = '\0';
     char* rescuer_name = trim(name_start + 1);
 
     // Parsing numero soccorritori: seconda coppia di parentesi quadre
     char* num_start = strchr(name_end + 1, '[');
     char* num_end = strchr(name_end + 1, ']');
-    if (!num_start || !num_end || num_end <= num_start) return -1;
+    if (!num_start || !num_end || num_end <= num_start) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("112", "FILE_PARSING", log_msg);
+        return -1;
+    }
     *num_end = '\0';
     int count = atoi(trim(num_start + 1));
 
     // Parsing velocità: terza coppia di parentesi quadre
     char* speed_start = strchr(num_end + 1, '[');
     char* speed_end = strchr(num_end + 1, ']');
-    if (!speed_start || !speed_end || speed_end <= speed_start) return -1;
+    if (!speed_start || !speed_end || speed_end <= speed_start) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("112", "FILE_PARSING", log_msg);
+        return -1;
+    }
     *speed_end = '\0';
     int speed = atoi(trim(speed_start + 1));
 
     // Parsing psizione base: quarta coppia di parentesi quadre
     char* base_start = strchr(speed_end + 1, '[');
     char* base_end = strchr(speed_end + 1, ']');
-    if (!base_start || !base_end || base_end <= base_start) return -1;
+    if (!base_start || !base_end || base_end <= base_start) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("112", "FILE_PARSING", log_msg);
+        return -1;
+    }
     *base_end = '\0';
     char* times_str = trim(base_start + 1);
 
@@ -63,7 +83,12 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
         position[t++] = atoi(trim(token));
         token = strtok(NULL, ";");
     }
-    if (t != 2 || token != NULL) return -1;
+    if (t != 2 || token != NULL) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("112", "FILE_PARSING", log_msg);
+        return -1;
+    }
 
     // Popola la struttura rescuer_type_t_info
     out_type_info->rescuer_type.rescuer_type_name = strdup(rescuer_name);
@@ -86,7 +111,12 @@ int load_rescuer_types(
     int* out_count
 ) {
     FILE* file = fopen(filename, "r");
-    if (!file) return -1;
+    if (!file) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
+        log_event("112", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        return -1;
+    } // Errore apertura file
 
      // Alloca spazio per un massimo di 16 tipi di soccorritore
     *out_types = malloc(sizeof(rescuer_type_info_t) * MAX_RESCUER_TYPES);
@@ -98,7 +128,7 @@ int load_rescuer_types(
         if (parse_rescuer_type_line(line, &(*out_types)[count]) == 0) {
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) correttamente caricata da file", (*out_types)[count].rescuer_type.rescuer_type_name);
-            log_event("01", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("012", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
             count++;
         }
     }

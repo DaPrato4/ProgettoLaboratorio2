@@ -130,7 +130,7 @@ int main() {
     //------PROVE MQ------
     printf("\n\n\nAvvio del thread ricevitore della coda...\n");
     pthread_t mq_thread;
-    start_mq_receiver_thread(emergency_types,emergency_count, env_config.queue , &mq_thread); // Avvia il thread per ricevere le emergenze dalla coda
+    start_mq_receiver_thread(emergency_types,emergency_count, &env_config , &mq_thread); // Avvia il thread per ricevere le emergenze dalla coda
     //pthread_join(mq_thread, NULL); // Attende la fine del thread ricevitore
 
 

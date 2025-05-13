@@ -103,6 +103,7 @@ typedef struct {
  * le coordinate, il tempo, e i soccorritori assegnati.
  */
 typedef struct {
+    int id;                                    ///< Identificativo univoco dell’emergenza (AGGIUNTO PER COMODITÀ)
     emergency_type_t type;                     ///< Tipo di emergenza (caricato da file)
     emergency_status_t status;                 ///< Stato attuale dell’emergenza
     int x;                                     ///< Coordinata X dell’emergenza
@@ -134,7 +135,7 @@ typedef struct {
     pthread_mutex_t mutex;            // Mutex personale
     pthread_cond_t cond;              // Condition var personale
     pthread_t thread;                 // Thread associato
-    emergency_t* current_em;     // Emergenza corrente
+    emergency_t* current_em;          // Emergenza corrente
 } rescuer_thread_t;
 
 #endif // TYPES_H

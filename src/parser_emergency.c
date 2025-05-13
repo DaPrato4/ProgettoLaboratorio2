@@ -4,7 +4,7 @@
 #include "types.h"
 #include "logger.h"
 
-#define MAX_LINE_LENGTH 256
+#define MAX_LINE_LENGTH 128
 #define MAX_RESCUERS_PER_TYPE 8
 #define MAX_EMERGENCY_TYPES 16
 
@@ -41,14 +41,24 @@ int parse_emergency_type_line(
     // Parsing nome emergenza: cerca la prima coppia di parentesi quadre
     char* name_start = strchr(buffer, '[');
     char* name_end = strchr(buffer, ']');
-    if (!name_start || !name_end || name_end <= name_start) return -1;
+    if (!name_start || !name_end || name_end <= name_start){
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("112", "FILE_PARSING", log_msg);
+        return -1; // Errore: formato non valido
+    };
     *name_end = '\0'; // Termina la stringa del nome
     char* emergency_name = trim(name_start + 1); // Ottieni il nome senza spazi
 
     // Parsing priorità: cerca la seconda coppia di parentesi quadre
     char* priority_start = strchr(name_end + 1, '[');
     char* priority_end = strchr(name_end + 1, ']');
-    if (!priority_start || !priority_end || priority_end <= priority_start) return -1;
+    if (!priority_start || !priority_end || priority_end <= priority_start) {
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+            log_event("112", "FILE_PARSING", log_msg);
+            return -1; // Errore: formato non valido
+        }
     *priority_end = '\0'; // Termina la stringa della priorità
     int priority = atoi(trim(priority_start + 1)); // Converte la priorità in intero
 
@@ -120,7 +130,12 @@ int load_emergency_types(
     int known_types_count
 ) {
     FILE* file = fopen(filename, "r");
-    if (!file) return -1; // Errore apertura file
+    if (!file) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
+        log_event("012", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        return -1;
+    } // Errore apertura file
 
     // Alloca spazio per un massimo di 16 tipi di emergenza
     emergency_type_t* types = malloc(sizeof(emergency_type_t) * MAX_EMERGENCY_TYPES);
@@ -135,7 +150,11 @@ int load_emergency_types(
             count++;
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente caricata da file", types[count - 1].emergency_desc);
-            log_event("01", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("112", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        }else{
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Errore nel caricamento dell'emergenza da file: (%s)", line);
+            log_event("112", "FILE_PARSING", log_msg); // Logga l'errore
         }
     }
 
