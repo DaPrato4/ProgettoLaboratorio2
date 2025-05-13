@@ -109,7 +109,7 @@ typedef struct {
     int y;                                     ///< Coordinata Y dell’emergenza
     time_t time;                               ///< Tempo di inizio della gestione
     int rescuer_count;                         ///< Numero di soccorritori assegnati
-    rescuer_digital_twin_t* rescuers_dt;       ///< Puntatore all’elenco dei soccorritori assegnati
+    rescuer_digital_twin_t** rescuers_dt;      ///< Puntatore all’elenco dei soccorritori assegnati
 } emergency_t;
 
 //AGGIUNTI

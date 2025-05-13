@@ -10,8 +10,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include "logger.h"
 
 int main() {
+
+    //------LOGGER------
+    start_logger_thread(); // Avvia il thread logger
+    printf("Avvio del thread logger...\n");
+    // log_event("SYSTEM", "START", "Sistema avviato"); // Logga l'evento di avvio del sistema
+    // log_event("MQ_RECEIVER", "START", "Thread ricevitore della coda avviato"); // Logga l'evento di avvio del thread ricevitore
+    // log_event("SCHEDULER", "START", "Thread scheduler avviato"); // Logga l'evento di avvio del thread scheduler
+    // log_event("RESCUER", "START", "Thread soccorritore avviato"); // Logga l'evento di avvio del thread soccorritore
+
+
     //------parsing dell'ambiente------
     env_config_t env_config;
     if (load_env_config("./conf/env.conf", &env_config) != 0) {
@@ -129,6 +140,11 @@ int main() {
     args->rescuers = rescuers_twin_thread; // Passa i soccorritori al thread scheduler
     pthread_t scheduler_thread;
     pthread_create(&scheduler_thread, NULL, scheduler_thread_fun, args);
+
+    
+
+
+
     pthread_join(scheduler_thread, NULL); // Attende la fine del thread scheduler
 
     // Ricorda di liberare la memoria allocata

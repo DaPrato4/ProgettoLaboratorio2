@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include "logger.h"
 
 #define MAX_MSG_SIZE sizeof(emergency_request_t)
 
@@ -55,9 +56,17 @@ void* mq_receiver_thread(void* arg) {
             }
             if (i == emergency_count) {
                 fprintf(stderr, "❌ Tipo di emergenza non riconosciuto: %s\n", req.emergency_name);
+                // Logga l'errore
+                char log_msg[256];
+                snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza non riconosciuto: %s", req.emergency_name);
+                log_event("ERR", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
                 continue;
             }else {
                 printf("✅ Tipo di emergenza riconosciuto: %s\n", req.emergency_name);
+                // Logga l'evento
+                char log_msg[256];
+                snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza riconosciuto: %s", req.emergency_name);
+                log_event("N/A", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
                 emergency_t em;
                 memset(&em, 0, sizeof(em)); // Inizializza la struttura emergency_t a zero
                 em.type = emergency_types[i]; // Associa il tipo di emergenza

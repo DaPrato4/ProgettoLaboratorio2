@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/types.h"
+#include "types.h"
+#include "logger.h"
 
 // Rimuove spazi iniziali e finali
 static char* trim(char* str) {
@@ -37,6 +38,10 @@ int load_env_config(const char* filename, env_config_t* config) {
         } else if (strcmp(key, "width") == 0) {
             config->width = atoi(value);
         }
+
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Parametro ambiente (%s) correttamente caricata da file", key);
+        log_event("01", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
     }
     fclose(file);
     return 0;

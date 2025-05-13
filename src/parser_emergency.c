@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/types.h"
+#include "types.h"
+#include "logger.h"
 
 #define MAX_LINE_LENGTH 256
 #define MAX_RESCUERS_PER_TYPE 8
@@ -132,6 +133,9 @@ int load_emergency_types(
         // Parsea la riga e aggiunge la struttura risultante all'array
         if (parse_emergency_type_line(line, &types[count], known_types, known_types_count) == 0) {
             count++;
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente caricata da file", types[count - 1].emergency_desc);
+            log_event("01", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         }
     }
 

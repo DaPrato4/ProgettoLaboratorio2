@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "logger.h"
 
 void* scheduler_thread_fun(void* arg) {
     scheduler_args_t* args = (scheduler_args_t*)arg;
@@ -54,11 +55,15 @@ void* scheduler_thread_fun(void* arg) {
             if (needed > 0) {
                 printf("❌ [SCHEDULER] Non ci sono abbastanza soccorritori disponibili per: %s\n",
                     req.type->rescuer_type_name);
-
+                char log_msg[256];
+                snprintf(log_msg, sizeof(log_msg), "Non ci sono abbastanza soccorritori disponibili per: %s",
+                    req.type->rescuer_type_name);
+                // char id [3];
+                // snprintf(id, sizeof(id), "%d", r->id);
+                log_event("ID_EMERGENZA", "EMERGENCY_SCHEDULER_TIMEOUT", log_msg);
                 e.status = TIMEOUT;
                 emergency_queue_add(e); // la reinserisci in coda come TIMEOUT
                 free(digital_twins_selected); // libera memoria
-                //sleep(1); // evita ciclo infinito e stress alla CPU
                 break; // riprendi dal ciclo while
             }
 
@@ -66,29 +71,35 @@ void* scheduler_thread_fun(void* arg) {
             if (needed == 0) {
                 printf("[SCHEDULER] %d soccorritori del tipo %s disponibili\n",
                        req.required_count, req.type->rescuer_type_name);
-            } else {
-                printf("❌ [SCHEDULER] Non ci sono abbastanza soccorritori disponibili per: %s\n",
-                       req.type->rescuer_type_name);
-            }   
+            }  
 
         }
 
         if (assigned == total_needed) {
             // 4. Assegna i soccorritori all'emergenza
             e.rescuers_dt = digital_twins_selected;
+            char rescuers_assigned[64] = "";
             //risveglia i soccorritori
             for (int j = 0; j < assigned; j++) {
                 rescuer_digital_twin_t* r = digital_twins_selected[j];
                 pthread_mutex_lock(&rescuers[r->id].mutex);
                 r->status = EN_ROUTE_TO_SCENE;
-                printf("🆕 [SCHEDULER] Twin ID %d (addr: %p) aggiornato a stato %d\n", r->id, (void*)r, r->status);
+                // printf("🆕 [SCHEDULER] Twin ID %d (addr: %p) aggiornato a stato %d\n", r->id, (void*)r, r->status);
                 rescuers[r->id].current_em = &e;
                 pthread_mutex_unlock(&rescuers[r->id].mutex);
                 pthread_cond_signal(&rescuers[r->id].cond);
+                strcat(rescuers_assigned, rescuers[r->id].twin->rescuer->rescuer_type_name);
+                if(j != assigned-1) strcat(rescuers_assigned, ", ");
             }
             e.status = ASSIGNED;
-            printf("✅ [SCHEDULER] Assegnati %d soccorritori all’emergenza: %s\n",
+            printf("✅ [SCHEDULER] Assegnati %d soccorritori all'emergenza: %s\n",
                    assigned, e.type.emergency_desc);
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Assegnati %d soccorritori (%s) all'emergenza: %s",
+                   assigned,rescuers_assigned ,e.type.emergency_desc);
+            char id [3];
+            snprintf(id, sizeof(id), "%d", e.x);
+            log_event(id, "EMERGENCY_SCHEDULER", log_msg);
         }
 
         // Attendi un attimo prima di gestire la prossima
