@@ -19,6 +19,53 @@ void* scheduler_thread_fun(void* arg) {
         printf("🧭 [SCHEDULER] Emergenza da gestire: %s (%d,%d), priorità %d\n",
                e.type.emergency_desc, e.x, e.y, e.type.priority);
 
+        // Controll se l' emergenza può essere gestita in tempo
+        int max_time = 0;
+        int time_to_manage = 0;
+        switch (e.type.priority)
+        {
+        case 0:
+            max_time = -1; // priorità 0, non ha un tempo massimo
+            break;
+        case 1:
+            max_time = 30; // priorità 1, tempo massimo 30 secondi
+            break;
+        case 2:
+            max_time = 10; // priorità 2, tempo massimo 10 secondi
+            break;
+        default:
+            printf("❌ [SCHEDULER] Priorità non valida: %d\n", e.type.priority);
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Priorità non valida: %d", e.type.priority);
+            char id [3];
+            snprintf(id, sizeof(id), "%d", e.id);
+            log_event(id, "EMERGENCY_SCHEDULER", log_msg);
+            update_emergency_status(&e, TIMEOUT); // Aggiorna lo stato dell'emergenza
+            break;
+        }
+
+        // trovo il tempo di gestione dell'emergenza
+        for (int i = 0; i < e.type.rescuers_req_number; i++) {
+            rescuer_request_t req = e.type.rescuers[i];
+            int travel_time = ( abs(e.x - req.type->x) + abs(e.y - req.type->y) ) / req.type->speed;
+            if(req.time_to_manage + travel_time > time_to_manage) {
+                time_to_manage = req.time_to_manage + travel_time;
+            }
+        }
+        // Se il tempo di gestione supera il massimo, scarta l'emergenza
+        if (max_time > 0 && time_to_manage > max_time) {
+            printf("❌ [SCHEDULER] Emergenza scartata: %s (%d,%d), tempo massimo superato\n",
+                   e.type.emergency_desc, e.x, e.y);
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Emergenza scartata: %s (%d,%d), richiesti %d secondi per la gestione (priorità %d)",
+                   e.type.emergency_desc, e.x, e.y, max_time, e.type.priority);
+            char id [3];
+            snprintf(id, sizeof(id), "%d", e.id);
+            log_event(id, "EMERGENCY_SCHEDULER", log_msg);
+            update_emergency_status(&e, TIMEOUT); // Aggiorna lo stato dell'emergenza
+            continue; // Passa alla prossima emergenza
+        }
+
 
         // 2. Per ogni tipo di soccorritore richiesto da questa emergenza
         int assigned = 0;
@@ -26,6 +73,7 @@ void* scheduler_thread_fun(void* arg) {
         rescuer_digital_twin_t** digital_twins_selected = malloc(0);
         for (int i = 0; i < e.type.rescuers_req_number; i++) {
             rescuer_request_t req = e.type.rescuers[i];
+            // soccorritori riciesti di un certo tipo
             int needed = req.required_count;
             total_needed += needed;
             rescuer_digital_twin_t** temp = realloc(digital_twins_selected, total_needed * sizeof(rescuer_digital_twin_t));
