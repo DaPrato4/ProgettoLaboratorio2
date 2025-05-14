@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "logger.h"
+#include "emergency_status.h"
 
 char* stato(rescuer_status_t status) {
     switch (status) {
@@ -44,6 +45,7 @@ void* rescuer_thread(void* arg) {
                 break;
             }
         }
+        // tempo di intervento dell'emergenza
         int emergency_time = current_em->type.rescuers[index].time_to_manage;
 
         pthread_mutex_lock(&wrapper->mutex);
@@ -60,6 +62,8 @@ void* rescuer_thread(void* arg) {
         sleep(travel_time); // Simula il tempo di viaggio
 
         // Simula intervento
+        // wrapper->current_em->status = IN_PROGRESS;
+        update_emergency_status(current_em, IN_PROGRESS);
         r->x = current_em->x;
         r->y = current_em->y;
         r->status = ON_SCENE;
@@ -70,11 +74,15 @@ void* rescuer_thread(void* arg) {
         snprintf(id, sizeof(id), "%d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(emergency_time); // Simula il tempo di intervento
+        // wrapper->current_em->status = COMPLETED;
+        
+
 
         //Riritorno alla base
         r->x = r->rescuer->x;
         r->y = r->rescuer->y;
         r->status = RETURNING_TO_BASE;
+        update_emergency_status(current_em, COMPLETED);
         printf("🏡 [%s #%d] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.\n",
             r->rescuer->rescuer_type_name, r->id,current_em->x, current_em->y, r->x, r->y, travel_time);
         snprintf(log_msg, sizeof(log_msg), "[%s #%d (%s)] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.",

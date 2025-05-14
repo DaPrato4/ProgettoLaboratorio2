@@ -74,14 +74,14 @@ void emergency_queue_add(emergency_t e) {
         int index = (head + i) % MAX_EMERGENCIES;
         printf("[queue] [%d] %s (%d,%d)\n", i, emergency_queue[index].type.emergency_desc, emergency_queue[index].x, emergency_queue[index].y);
         //stampa tutti i dati dell'emergenza
-        printf("[queue] [emergenza] %s\n", emergency_queue[index].type.emergency_desc);
-        printf("[queue] [status] %d\n", emergency_queue[index].status);
-        printf("[queue] [x] %d\n", emergency_queue[index].x);
-        printf("[queue] [y] %d\n", emergency_queue[index].y);
-        printf("[queue] [time] %ld\n", emergency_queue[index].time);
-        printf("[queue] [rescuer_count] %d\n", emergency_queue[index].rescuer_count);
-        printf("[queue] [rescuer_dt] %p\n", emergency_queue[index].rescuers_dt);
-        printf("[queue] ------------------------\n");
+        // printf("[queue] [emergenza] %s\n", emergency_queue[index].type.emergency_desc);
+        // printf("[queue] [status] %d\n", emergency_queue[index].status);
+        // printf("[queue] [x] %d\n", emergency_queue[index].x);
+        // printf("[queue] [y] %d\n", emergency_queue[index].y);
+        // printf("[queue] [time] %ld\n", emergency_queue[index].time);
+        // printf("[queue] [rescuer_count] %d\n", emergency_queue[index].rescuer_count);
+        // printf("[queue] [rescuer_dt] %p\n", emergency_queue[index].rescuers_dt);
+        // printf("[queue] ------------------------\n");
     }
 
     
@@ -129,7 +129,7 @@ emergency_t emergency_queue_get() {
     }else {
         // Nessuna emergenza con status WAITING trovata → aspetta ancora
         pthread_mutex_unlock(&queue_mutex);
-        sleep(1); // o usleep(200000);
+        usleep(500000); // Aspetta mezzo secondo prima di riprovare
         return emergency_queue_get(); // tenta di nuovo ricorsivamente
     }
     pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex

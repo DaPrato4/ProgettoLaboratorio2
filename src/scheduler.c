@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "logger.h"
+#include "emergency_status.h"
 
 void* scheduler_thread_fun(void* arg) {
     scheduler_args_t* args = (scheduler_args_t*)arg;
@@ -61,7 +62,7 @@ void* scheduler_thread_fun(void* arg) {
                 // char id [3];
                 // snprintf(id, sizeof(id), "%d", r->id);
                 log_event("ID_EMERGENZA", "EMERGENCY_SCHEDULER_TIMEOUT", log_msg);
-                e.status = TIMEOUT;
+                update_emergency_status(&e, TIMEOUT); // Aggiorna lo stato dell'emergenza
                 emergency_queue_add(e); // la reinserisci in coda come TIMEOUT
                 free(digital_twins_selected); // libera memoria
                 break; // riprendi dal ciclo while
@@ -78,6 +79,7 @@ void* scheduler_thread_fun(void* arg) {
         if (assigned == total_needed) {
             // 4. Assegna i soccorritori all'emergenza
             e.rescuers_dt = digital_twins_selected;
+
             char rescuers_assigned[64] = "";
             //risveglia i soccorritori
             for (int j = 0; j < assigned; j++) {
@@ -91,7 +93,7 @@ void* scheduler_thread_fun(void* arg) {
                 strcat(rescuers_assigned, rescuers[r->id].twin->rescuer->rescuer_type_name);
                 if(j != assigned-1) strcat(rescuers_assigned, ", ");
             }
-            e.status = ASSIGNED;
+            update_emergency_status(&e, ASSIGNED); // Aggiorna lo stato dell'emergenza
             printf("✅ [SCHEDULER] Assegnati %d soccorritori all'emergenza: %s\n",
                    assigned, e.type.emergency_desc);
             char log_msg[256];

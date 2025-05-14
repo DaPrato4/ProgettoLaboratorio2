@@ -55,7 +55,7 @@ void* mq_receiver_thread(void* arg) {
             printf("[MQ] Ricevuta emergenza: %s (%d,%d)\n", req.emergency_name, req.x, req.y);
             // Logga l'evento
             char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Ricevuta emergenza: %s luogo:(%d,%d) ora:%s", req.emergency_name, req.x, req.y, asctime(gmtime(&req.timestamp)));
+            snprintf(log_msg, sizeof(log_msg), "Ricevuta emergenza: %s luogo:(%d,%d) ora:%ld", req.emergency_name, req.x, req.y, (long)&req.timestamp);
             log_event("010", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza Ricevuta
             
             // Controlla se le coordinate sono valide
@@ -94,10 +94,15 @@ void* mq_receiver_thread(void* arg) {
                 em.x = req.x;
                 em.y = req.y;
                 em.time = req.timestamp;
-                em.status = WAITING;                
-                em.rescuer_count = emergency_types[i].rescuers_req_number;
+                em.status = WAITING;           
+                // trovo il numero preciso di soccorritori richiesti
+                em.rescuer_count = 0;
+                for(int j = 0; j < emergency_types[i].rescuers_req_number; ++j) {
+                    em.rescuer_count += emergency_types[i].rescuers[j].required_count;
+                }
                 em.rescuers_dt = malloc(em.rescuer_count * sizeof(rescuer_digital_twin_t));
-                em.id = id++; // Assegna un ID univoco all'emergenza
+                em.id = id++; // Assegna un ID univoco all'emergenzaù
+                pthread_mutex_init(&em.mutex, NULL); // Inizializza il mutex
                 emergency_queue_add(em);    // Aggiunge l'emergenza alla coda interna
             }
 

@@ -111,6 +111,7 @@ typedef struct {
     time_t time;                               ///< Tempo di inizio della gestione
     int rescuer_count;                         ///< Numero di soccorritori assegnati
     rescuer_digital_twin_t** rescuers_dt;      ///< Puntatore all’elenco dei soccorritori assegnati
+    pthread_mutex_t mutex;                     ///< Mutex per la sincronizzazione dell'accesso         
 } emergency_t;
 
 //AGGIUNTI
