@@ -1,6 +1,7 @@
 #include "types.h"
 #include "logger.h"
 #include <pthread.h>
+#include <stdlib.h>
 
 //Aggiungo un mutex alla struct di emergenza per gestire l' accesso concorrente senza dover bloccare tutti i soccorritori
 
@@ -51,19 +52,23 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
             snprintf(id, sizeof(id), "%d", em->id);
             log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (COMPLETED)");
         }
+        free(em);
         break;
     case TIMEOUT:
         em->status = new_status;
         snprintf(id, sizeof(id), "%d", em->id);
         log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (TIMEOUT)");
+        free(em);
         break;
     case CANCELED:
         em->status = new_status;
         snprintf(id, sizeof(id), "%d", em->id);
         log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (CANCELED)");
+        free(em);
         break;
     default:
         log_event("ID_EMERGENZA", "EMERGENCY_STATUS", "Stato di emergenza non valido");
+        free(em);
         break;
     }
     pthread_mutex_unlock(&em->mutex); // Rilascia il mutex

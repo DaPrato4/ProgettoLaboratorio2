@@ -14,15 +14,15 @@ void* scheduler_thread_fun(void* arg) {
 
     while (1) {
         // 1. Attende ed estrae emergenza con priorità più alta (gestisce il mutex internamente)
-        emergency_t e = emergency_queue_get();
+        emergency_t* e = emergency_queue_get();
 
         printf("🧭 [SCHEDULER] Emergenza da gestire: %s (%d,%d), priorità %d\n",
-               e.type.emergency_desc, e.x, e.y, e.type.priority);
+               e->type.emergency_desc, e->x, e->y, e->type.priority);
 
         // Controll se l' emergenza può essere gestita in tempo
         int max_time = 0;
         int time_to_manage = 0;
-        switch (e.type.priority)
+        switch (e->type.priority)
         {
         case 0:
             max_time = -1; // priorità 0, non ha un tempo massimo
@@ -34,20 +34,20 @@ void* scheduler_thread_fun(void* arg) {
             max_time = 10; // priorità 2, tempo massimo 10 secondi
             break;
         default:
-            printf("❌ [SCHEDULER] Priorità non valida: %d\n", e.type.priority);
+            printf("❌ [SCHEDULER] Priorità non valida: %d\n", e->type.priority);
             char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Priorità non valida: %d", e.type.priority);
+            snprintf(log_msg, sizeof(log_msg), "Priorità non valida: %d", e->type.priority);
             char id [3];
-            snprintf(id, sizeof(id), "%d", e.id);
+            snprintf(id, sizeof(id), "%d", e->id);
             log_event(id, "EMERGENCY_SCHEDULER", log_msg);
-            update_emergency_status(&e, TIMEOUT); // Aggiorna lo stato dell'emergenza
+            update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
             break;
         }
 
         // trovo il tempo di gestione dell'emergenza
-        for (int i = 0; i < e.type.rescuers_req_number; i++) {
-            rescuer_request_t req = e.type.rescuers[i];
-            int travel_time = ( abs(e.x - req.type->x) + abs(e.y - req.type->y) ) / req.type->speed;
+        for (int i = 0; i < e->type.rescuers_req_number; i++) {
+            rescuer_request_t req = e->type.rescuers[i];
+            int travel_time = ( abs(e->x - req.type->x) + abs(e->y - req.type->y) ) / req.type->speed;
             if(req.time_to_manage + travel_time > time_to_manage) {
                 time_to_manage = req.time_to_manage + travel_time;
             }
@@ -55,14 +55,14 @@ void* scheduler_thread_fun(void* arg) {
         // Se il tempo di gestione supera il massimo, scarta l'emergenza
         if (max_time > 0 && time_to_manage > max_time) {
             printf("❌ [SCHEDULER] Emergenza scartata: %s (%d,%d), tempo massimo superato\n",
-                   e.type.emergency_desc, e.x, e.y);
+                   e->type.emergency_desc, e->x, e->y);
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza scartata: %s (%d,%d), richiesti %d secondi per la gestione (priorità %d)",
-                   e.type.emergency_desc, e.x, e.y, max_time, e.type.priority);
+                   e->type.emergency_desc, e->x, e->y, max_time, e->type.priority);
             char id [3];
-            snprintf(id, sizeof(id), "%d", e.id);
+            snprintf(id, sizeof(id), "%d", e->id);
             log_event(id, "EMERGENCY_SCHEDULER", log_msg);
-            update_emergency_status(&e, TIMEOUT); // Aggiorna lo stato dell'emergenza
+            update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
             continue; // Passa alla prossima emergenza
         }
 
@@ -71,15 +71,16 @@ void* scheduler_thread_fun(void* arg) {
         int assigned = 0;
         int total_needed = 0;
         rescuer_digital_twin_t** digital_twins_selected = malloc(0);
-        for (int i = 0; i < e.type.rescuers_req_number; i++) {
-            rescuer_request_t req = e.type.rescuers[i];
+        for (int i = 0; i < e->type.rescuers_req_number; i++) {
+            rescuer_request_t req = e->type.rescuers[i];
             // soccorritori riciesti di un certo tipo
             int needed = req.required_count;
             total_needed += needed;
             rescuer_digital_twin_t** temp = realloc(digital_twins_selected, total_needed * sizeof(rescuer_digital_twin_t));
             if (temp == NULL) {
                 perror("Errore realloc");
-                free(digital_twins_selected);
+                // free(digital_twins_selected);
+                digital_twins_selected = NULL;
                 return NULL; // O gestisci l'errore
             }
             digital_twins_selected = temp;
@@ -110,9 +111,10 @@ void* scheduler_thread_fun(void* arg) {
                 // char id [3];
                 // snprintf(id, sizeof(id), "%d", r->id);
                 log_event("ID_EMERGENZA", "EMERGENCY_SCHEDULER_TIMEOUT", log_msg);
-                update_emergency_status(&e, TIMEOUT); // Aggiorna lo stato dell'emergenza
-                emergency_queue_add(e); // la reinserisci in coda come TIMEOUT
-                free(digital_twins_selected); // libera memoria
+                update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
+                //emergency_queue_add(e); // la reinserisci in coda come TIMEOUT
+                // free(digital_twins_selected); // libera memoria
+                digital_twins_selected = NULL; // resetta il puntatore
                 break; // riprendi dal ciclo while
             }
 
@@ -126,7 +128,7 @@ void* scheduler_thread_fun(void* arg) {
 
         if (assigned == total_needed) {
             // 4. Assegna i soccorritori all'emergenza
-            e.rescuers_dt = digital_twins_selected;
+            e->rescuers_dt = digital_twins_selected;
 
             char rescuers_assigned[64] = "";
             //risveglia i soccorritori
@@ -135,20 +137,20 @@ void* scheduler_thread_fun(void* arg) {
                 pthread_mutex_lock(&rescuers[r->id].mutex);
                 r->status = EN_ROUTE_TO_SCENE;
                 // printf("🆕 [SCHEDULER] Twin ID %d (addr: %p) aggiornato a stato %d\n", r->id, (void*)r, r->status);
-                rescuers[r->id].current_em = &e;
+                rescuers[r->id].current_em = e;
                 pthread_mutex_unlock(&rescuers[r->id].mutex);
                 pthread_cond_signal(&rescuers[r->id].cond);
                 strcat(rescuers_assigned, rescuers[r->id].twin->rescuer->rescuer_type_name);
                 if(j != assigned-1) strcat(rescuers_assigned, ", ");
             }
-            update_emergency_status(&e, ASSIGNED); // Aggiorna lo stato dell'emergenza
+            update_emergency_status(e, ASSIGNED); // Aggiorna lo stato dell'emergenza
             printf("✅ [SCHEDULER] Assegnati %d soccorritori all'emergenza: %s\n",
-                   assigned, e.type.emergency_desc);
+                   assigned, e->type.emergency_desc);
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Assegnati %d soccorritori (%s) all'emergenza: %s",
-                   assigned,rescuers_assigned ,e.type.emergency_desc);
+                   assigned,rescuers_assigned ,e->type.emergency_desc);
             char id [3];
-            snprintf(id, sizeof(id), "%d", e.x);
+            snprintf(id, sizeof(id), "%d", e->x);
             log_event(id, "EMERGENCY_SCHEDULER", log_msg);
         }
 

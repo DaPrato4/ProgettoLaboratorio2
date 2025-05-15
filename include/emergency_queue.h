@@ -4,7 +4,7 @@
 #include "types.h"
 
 void emergency_queue_init();
-void emergency_queue_add(emergency_t emergenza);
-emergency_t emergency_queue_get();
+void emergency_queue_add(emergency_t* emergenza);
+emergency_t* emergency_queue_get();
 
 #endif // EMERGENCY_QUEUE_H

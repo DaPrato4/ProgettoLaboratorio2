@@ -3,12 +3,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "logger.h"
+#include <stdlib.h>
 
 // Numero massimo di emergenze che la coda può contenere
 #define MAX_EMERGENCIES 100
 
 // Coda circolare di emergenze
-static emergency_t emergency_queue[MAX_EMERGENCIES];  // array circolare per le emergenze
+static emergency_t* emergency_queue[MAX_EMERGENCIES];  // array circolare per le emergenze
 
 // Indici per la testa (head), la coda (tail) e il conteggio degli elementi (count)
 static int head = 0, tail = 0, count = 0;             // indici e conteggio
@@ -40,7 +41,7 @@ void emergency_queue_init() {
  * 
  * @param e L'emergenza da aggiungere alla coda.
  */
-void emergency_queue_add(emergency_t e) {
+void emergency_queue_add(emergency_t* e) {
     pthread_mutex_lock(&queue_mutex);    // Acquisisce il mutex per l'accesso esclusivo
 
     // Controlla se la coda è piena
@@ -49,16 +50,16 @@ void emergency_queue_add(emergency_t e) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: coda piena, emergenza scartata!");
         char id [3];
-        snprintf(id, sizeof(id), "%d", e.id);
+        snprintf(id, sizeof(id), "%d", e->id);
         log_event(id, "MESSAGE_QUEUE", log_msg); // Logga lo scarto dell'emergenza
         pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex prima di uscire
         return;
     }
 
     char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente aggiunta alla coda", e.type.emergency_desc);
+        snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente aggiunta alla coda", e->type.emergency_desc);
         char id [3];
-        snprintf(id, sizeof(id), "%d", e.id);
+        snprintf(id, sizeof(id), "%d", e->id);
         log_event(id, "MESSAGE_QUEUE", log_msg); // Logga L'aggiunta dell'emergenza
 
     // Inserisce l'emergenza in coda e aggiorna l'indice di tail
@@ -68,11 +69,11 @@ void emergency_queue_add(emergency_t e) {
 
 
     //stampa la coda
-    printf("[queue] Aggiunta emergenza: %s (%d,%d)\n", e.type.emergency_desc, e.x, e.y);
+    printf("[queue] Aggiunta emergenza: %s (%d,%d)\n", e->type.emergency_desc, e->x, e->y);
     printf("[queue] Coda attuale: %d emergenze\n", count);
     for (int i = 0; i < count; i++) {
         int index = (head + i) % MAX_EMERGENCIES;
-        printf("[queue] [%d] %s (%d,%d)\n", i, emergency_queue[index].type.emergency_desc, emergency_queue[index].x, emergency_queue[index].y);
+        printf("[queue] [%d] %s (%d,%d) stato [%d]\n", i, emergency_queue[index]->type.emergency_desc, emergency_queue[index]->x, emergency_queue[index]->y, emergency_queue[index]->status);
         //stampa tutti i dati dell'emergenza
         // printf("[queue] [emergenza] %s\n", emergency_queue[index].type.emergency_desc);
         // printf("[queue] [status] %d\n", emergency_queue[index].status);
@@ -97,41 +98,47 @@ void emergency_queue_add(emergency_t e) {
  * 
  * @return emergency_t L'emergenza estratta dalla coda.
  */
-emergency_t emergency_queue_get() {
-    pthread_mutex_lock(&queue_mutex);    // Acquisisce il mutex per l'accesso esclusivo
+emergency_t* emergency_queue_get() {
+    emergency_t* e = malloc(sizeof(emergency_t)); // Alloca memoria per l'emergenza
+    while (1){  // Ciclo infinito per attendere un'emergenza
+    
+        pthread_mutex_lock(&queue_mutex);    // Acquisisce il mutex per l'accesso esclusivo
 
-    // Attende finché la coda è vuota
-    while (count == 0) {
-        pthread_cond_wait(&queue_not_empty, &queue_mutex); // Attende una segnalazione
-    }
+        // Attende finché la coda è vuota
+        while (count == 0) {
+            pthread_cond_wait(&queue_not_empty, &queue_mutex); // Attende una segnalazione
+            printf("numero di emergenze in coda: %d\n", count);
+        }
+        printf("numero di emergenze in coda: %d\n", count);
 
-    // Estrae l'emergenza con priorità più alta
-    emergency_t e;
-    short max_priority = -1;
-    int max_index = -1;
-    for (int i = 0; i < count; i++){
-        int index = (head + i) % MAX_EMERGENCIES; // Calcola l'indice circolare
-        if(emergency_queue[index].type.priority > max_priority && emergency_queue[index].status == WAITING) {
-            max_priority = emergency_queue[index].type.priority;
-            max_index = index;
+        // Estrae l'emergenza con priorità più alta
+        
+        short max_priority = -1;
+        int max_index = -1;
+        for (int i = 0; i < count; i++){
+            int index = (head + i) % MAX_EMERGENCIES; // Calcola l'indice circolare
+            if(emergency_queue[index]->type.priority > max_priority && emergency_queue[index]->status == WAITING) {
+                max_priority = emergency_queue[index]->type.priority;
+                max_index = index;
+            }
         }
-    }
-    if (max_index != -1) {
-        e = emergency_queue[max_index]; // Estrae l'emergenza con priorità più alta
-        // Rimuove l'emergenza dalla coda
-        for (int i = max_index; i != tail; i = (i + 1) % MAX_EMERGENCIES) {
-            int next = (i + 1) % MAX_EMERGENCIES;
-            if (next != tail)
-                emergency_queue[i] = emergency_queue[next];
+        if (max_index != -1) {
+            e = emergency_queue[max_index]; // Estrae l'emergenza con priorità più alta
+            // Rimuove l'emergenza dalla coda
+            for (int i = max_index; i != tail; i = (i + 1) % MAX_EMERGENCIES) {
+                int next = (i + 1) % MAX_EMERGENCIES;
+                if (next != tail)
+                    emergency_queue[i] = emergency_queue[next];
+            }
+            tail = (tail - 1 + MAX_EMERGENCIES) % MAX_EMERGENCIES; // Gestione circolare dell'indice
+            count--; // Decrementa il conteggio degli elementi
+            pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex
+            return e;                            // Restituisce l'emergenza estratta
         }
-        tail = (tail - 1 + MAX_EMERGENCIES) % MAX_EMERGENCIES; // Gestione circolare dell'indice
-        count--; // Decrementa il conteggio degli elementi
-    }else {
+
         // Nessuna emergenza con status WAITING trovata → aspetta ancora
         pthread_mutex_unlock(&queue_mutex);
-        usleep(500000); // Aspetta mezzo secondo prima di riprovare
-        return emergency_queue_get(); // tenta di nuovo ricorsivamente
+        // usleep(500000); // Aspetta mezzo secondo prima di riprovare
     }
-    pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex
-    return e;                            // Restituisce l'emergenza estratta
+
 }

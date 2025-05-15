@@ -88,21 +88,21 @@ void* mq_receiver_thread(void* arg) {
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza riconosciuto: %s", req.emergency_name);
                 log_event("011", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
-                emergency_t em;
-                memset(&em, 0, sizeof(em)); // Inizializza la struttura emergency_t a zero
-                em.type = emergency_types[i]; // Associa il tipo di emergenza
-                em.x = req.x;
-                em.y = req.y;
-                em.time = req.timestamp;
-                em.status = WAITING;           
+                emergency_t* em = malloc(sizeof(emergency_t)); // Alloca memoria per l'emergenza
+                memset(em, 0, sizeof(emergency_t)); // Inizializza la struttura emergency_t a zero
+                em->type = emergency_types[i]; // Associa il tipo di emergenza
+                em->x = req.x;
+                em->y = req.y;
+                em->time = req.timestamp;
+                em->status = WAITING;           
                 // trovo il numero preciso di soccorritori richiesti
-                em.rescuer_count = 0;
+                em->rescuer_count = 0;
                 for(int j = 0; j < emergency_types[i].rescuers_req_number; ++j) {
-                    em.rescuer_count += emergency_types[i].rescuers[j].required_count;
+                    em->rescuer_count += emergency_types[i].rescuers[j].required_count;
                 }
-                em.rescuers_dt = malloc(em.rescuer_count * sizeof(rescuer_digital_twin_t));
-                em.id = id++; // Assegna un ID univoco all'emergenzaù
-                pthread_mutex_init(&em.mutex, NULL); // Inizializza il mutex
+                em->rescuers_dt = malloc(em->rescuer_count * sizeof(rescuer_digital_twin_t));
+                em->id = id++; // Assegna un ID univoco all'emergenzaù
+                pthread_mutex_init(&em->mutex, NULL); // Inizializza il mutex
                 emergency_queue_add(em);    // Aggiunge l'emergenza alla coda interna
             }
 
