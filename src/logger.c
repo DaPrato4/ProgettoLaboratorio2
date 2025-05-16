@@ -15,6 +15,22 @@ typedef struct {
     char message[256];   // Messaggio descrittivo dell'evento
 } log_msg_t;
 
+
+
+// GESTIONE MESSAGGI TCP
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+int tcp_enabled = 0; // Flag per abilitare/disabilitare l'invio TCP
+char* tcp_server_ip = "127.0.0.1"; // Indirizzo IP del server TCP
+int tcp_server_port = 9000; // Porta del server TCP
+int tcp_sock_fd = -1; // File descriptor per la socket TCP
+void init_tcp_logger(); // Funzione per inizializzare la connessione TCP
+void send_log_json(const log_msg_t* msg); // Funzione per inviare messaggi JSON al server TCP
+
+
+
 // Coda circolare per i messaggi di log
 static log_msg_t log_queue[LOG_QUEUE_SIZE];
 // Indici di testa e coda della coda circolare
@@ -42,6 +58,10 @@ static void* logger_func(void* arg) {
             long timestamp = (long)time(NULL); // Ottiene il timestamp corrente
             // Scrive il messaggio di log nel file con il formato richiesto
             fprintf(f, "[%ld] [%s] [%s] %s\n", timestamp, msg->id, msg->event, msg->message);
+
+            // INVIO TCP
+            if (tcp_enabled) send_log_json(msg);
+
             log_tail = (log_tail + 1) % LOG_QUEUE_SIZE; // Avanza la coda
         }
         fflush(f); // Forza la scrittura su disco
@@ -54,6 +74,9 @@ static void* logger_func(void* arg) {
 // Avvia il thread logger
 void start_logger_thread() {
     pthread_create(&logger_thread, NULL, logger_func, NULL);
+
+    //INIZIALIZZA TCP
+    init_tcp_logger(); // Inizializza la connessione TCP al server
 }
 
 // Ferma il thread logger e attende la sua terminazione
@@ -63,6 +86,11 @@ void stop_logger_thread() {
     pthread_cond_signal(&log_cond); // Risveglia il thread logger se in attesa
     pthread_mutex_unlock(&log_mutex);
     pthread_join(logger_thread, NULL); // Attende la terminazione del thread logger
+
+    //CHIUSURA TCP
+    close(tcp_sock_fd); // Chiude la socket TCP
+    tcp_enabled = 0; // Disabilita l'invio TCP
+    tcp_sock_fd = -1; // Resetta il file descriptor della socket TCP
 }
 
 // Inserisce un nuovo messaggio di log nella coda
@@ -81,4 +109,48 @@ void log_event(const char* id, const char* event, const char* message) {
         pthread_cond_signal(&log_cond); // Notifica il thread logger della presenza di un nuovo messaggio
     }
     pthread_mutex_unlock(&log_mutex); // Sblocca il mutex
+}
+
+
+// AGGIUNTE PER INVIO MESSAGGI A SERVER TCP
+void init_tcp_logger() {
+    // Inizializza la connessione TCP al server
+    // Questa funzione serve per connettersi a un server TCP
+    // e inviare i messaggi di log direttamente al server.
+    tcp_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (tcp_sock_fd < 0) {
+        perror("Socket creation failed");
+        tcp_enabled = 0;
+    } else {
+        struct sockaddr_in addr = {0};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(tcp_server_port);
+        inet_pton(AF_INET, tcp_server_ip, &addr.sin_addr);
+
+        if (connect(tcp_sock_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+            perror("TCP logger: connection failed, continuing without TCP");
+            close(tcp_sock_fd);
+            tcp_enabled = 0;
+        } else {
+            tcp_enabled = 1;
+        }
+    }
+}
+
+void send_log_json(const log_msg_t* msg) {
+    if (!tcp_enabled || tcp_sock_fd < 0) return;
+
+    char json_msg[512];
+    // Serializza semplice JSON
+    snprintf(json_msg, sizeof(json_msg),
+             "{\"id\":\"%s\", \"event\":\"%s\", \"message\":\"%s\"}\n",
+             msg->id, msg->event, msg->message);
+
+    // Invia la stringa JSON via TCP
+    ssize_t sent = send(tcp_sock_fd, json_msg, strlen(json_msg), 0);
+    if (sent < 0) {
+        perror("Error sending log JSON");
+        tcp_enabled = 0;
+        close(tcp_sock_fd);
+    }
 }

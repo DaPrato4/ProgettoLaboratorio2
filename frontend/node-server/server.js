@@ -2,7 +2,7 @@ const net = require('net');                 // Modulo TCP nativo Node.js
 const WebSocket = require('ws');            // Libreria WebSocket per Node.js
 
 // Crea un server WebSocket sulla porta 8080 per React
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ host: '0.0.0.0', port: 8080 });
 
 wss.on('connection', ws => {                // Quando un client React si connette
   console.log('React client connected');
@@ -24,6 +24,7 @@ const tcpServer = net.createServer(socket => {
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {   // Solo client aperti
         client.send(data.toString());                // Manda messaggio WebSocket
+        console.log("Sent to React client:", data.toString());
       }
     });
   });
