@@ -22,21 +22,15 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
         if (!status) {
             em->status = new_status;
             snprintf(id, sizeof(id), "0%02d", em->id);
-            log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (ASSIGNED)");
+            log_event(id, "EMERGENCY_STATUS", "[ASSIGNED] Stato di emergenza aggiornato");
         }
         break;
     case IN_PROGRESS:
-        status = 0;
-        for (int i = 0; i < em->rescuer_count; i++) {
-            if (em->rescuers_dt[i]->status == EN_ROUTE_TO_SCENE) {
-                status = 1;
-                break;
-            }
-        }
+        status = (em->status == IN_PROGRESS);
         if (!status) {
             em->status = new_status;
             snprintf(id, sizeof(id), "0%02d", em->id);
-            log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (IN_PROGRESS)");
+            log_event(id, "EMERGENCY_STATUS", "[IN_PROGRESS] Stato di emergenza aggiornato");
         }
         break;
     case COMPLETED:
@@ -50,20 +44,20 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
         if (!status) {
             em->status = new_status;
             snprintf(id, sizeof(id), "0%02d", em->id);
-            log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (COMPLETED)");
+            log_event(id, "EMERGENCY_STATUS", "[COMPLETED] Stato di emergenza aggiornato ");
             free(em);
         }
         break;
     case TIMEOUT:
         em->status = new_status;
         snprintf(id, sizeof(id), "1%02d", em->id);
-        log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (TIMEOUT)");
+        log_event(id, "EMERGENCY_STATUS", "[TIMEOUT] Stato di emergenza aggiornato");
         free(em);
         break;
     case CANCELED:
         em->status = new_status;
         snprintf(id, sizeof(id), "1%02d", em->id);
-        log_event(id, "EMERGENCY_STATUS", "Stato di emergenza aggiornato (CANCELED)");
+        log_event(id, "EMERGENCY_STATUS", "[CANCELED] Stato di emergenza aggiornato");
         free(em);
         break;
     default:

@@ -32,6 +32,19 @@ void emergency_queue_init() {
     head = tail = count = 0;                     // Reset degli indici e del conteggio
 }
 
+char* stato_e(emergency_status_t status) {
+    switch (status) {
+        case WAITING: return "WAITING";
+        case ASSIGNED: return "ASSIGNED";
+        case IN_PROGRESS: return "IN_PROGRESS";
+        case PAUSED: return "PAUSED";
+        case COMPLETED: return "COMPLETED";
+        case CANCELED: return "CANCELED";
+        case TIMEOUT: return "TIMEOUT";
+        default: return "UNKNOWN_STATUS";
+    }
+}
+
 /**
  * @brief Aggiunge un'emergenza alla coda.
  * 
@@ -57,10 +70,10 @@ void emergency_queue_add(emergency_t* e) {
     }
 
     char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente aggiunta alla coda", e->type.emergency_desc);
+        snprintf(log_msg, sizeof(log_msg), "[(%s) (%d,%d) (%s)] Emergenza correttamente aggiunta alla coda", e->type.emergency_desc, e->x, e->y, stato_e(e->status));
         char id [4];
         snprintf(id, sizeof(id), "0%02d", e->id);
-        log_event(id, "MESSAGE_QUEUE", log_msg); // Logga L'aggiunta dell'emergenza
+        log_event(id, "EMERGENCY_INIT", log_msg); // Logga L'aggiunta dell'emergenza
 
     // Inserisce l'emergenza in coda e aggiorna l'indice di tail
     emergency_queue[tail] = e;

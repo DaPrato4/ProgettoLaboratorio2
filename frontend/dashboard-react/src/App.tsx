@@ -36,10 +36,7 @@ function App() {
     { id: 1, type: "incendio", pos: { x: 0, y: 0 }, status: "attivo" },
     { id: 2, type: "incendio", pos: { x: 10, y: 20 }, status: "attivo" },
   ]);
-  const [rescuers, setRescuers] = useState<Rescuer[]>([
-    { id: 1, type: "ambulanza", pos: { x: 0, y: 0 }, status: "attivo" , color: "#347520"},
-    { id: 2, type: "carabinieri", pos: { x: 29, y: 39 }, status: "attivo" , color: "#5d2075"},
-  ]);
+  const [rescuers, setRescuers] = useState<Rescuer[]>([]);
 
 
 
@@ -126,6 +123,55 @@ function App() {
 
     return () => cancelAnimationFrame(animationFrame);
   }, [emergencies, rescuers, animations]);
+  
+  useEffect(() => {
+  // Sostituisci con l'IP corretto della tua macchina WSL se diverso
+  const ws = new WebSocket("ws://172.28.236.125:8080");
+
+  ws.onopen = () => console.log("✅ WebSocket connessa a Node.js");
+  ws.onclose = () => console.warn("❌ WebSocket chiusa");
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      const { id, event: evt } = data;
+
+      if (evt === "RESCUER_INIT") {
+        const { x, y, type } = data;
+        const newId = parseInt(id);
+
+        setRescuers((prev) => {
+          if (prev.some((r) => r.id === newId)) return prev;
+
+          const colorMap: Record<string, string> = {
+            ambulanza: "#3b82f6",
+            carabinieri: "#5d2075",
+            pompieri: "#f43f5e",
+            polizia: "#10b981",
+            guardia: "#22d3ee",
+          };
+          const color = colorMap[type] || "#22d3ee";
+
+          return [
+            ...prev,
+            {
+              id: newId,
+              type,
+              pos: { x, y },
+              status: "IDLE",
+              color,
+            },
+          ];
+        });
+      }
+
+    } catch (err) {
+      console.error("❌ Errore parsing messaggio WebSocket:", event.data);
+    }
+  };
+
+  return () => ws.close();
+}, []);
 
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-white">

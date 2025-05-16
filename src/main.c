@@ -93,8 +93,17 @@ int main() {
             rescuers_twin_thread[idx].twin->y = rescuer_types_info[i].rescuer_type.y;
             rescuers_twin_thread[idx].twin->rescuer = &rescuer_types_info[i].rescuer_type;
             rescuers_twin_thread[idx].twin->status = IDLE;
-
             start_rescuer(&rescuers_twin_thread[idx]); // Avvia il thread del soccorritore
+            //logga la creazione del gemello digitale
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "[(%s) (%d,%d)] Creato gemello digitale per %s",
+                rescuers_twin_thread[idx].twin->rescuer->rescuer_type_name,
+                rescuers_twin_thread[idx].twin->x,
+                rescuers_twin_thread[idx].twin->y,
+                rescuers_twin_thread[idx].twin->rescuer->rescuer_type_name);
+            char id [4];
+            snprintf(id, sizeof(id), "0%02d", rescuers_twin_thread[idx].twin->id);
+            log_event(id, "RESCUER_INIT", log_msg); // Logga la creazione del gemello digitale
             idx++;
         }
     }

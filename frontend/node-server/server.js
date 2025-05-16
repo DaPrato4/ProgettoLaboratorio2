@@ -18,14 +18,16 @@ const tcpServer = net.createServer(socket => {
 
   // Quando riceve dati dal client C
   socket.on('data', data => {
-    console.log('Received from C:', data.toString());
+    const messages = data.toString().split("\n").filter(m => m.trim() !== "");
 
-    // Inoltra i dati a tutti i client React connessi
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {   // Solo client aperti
-        client.send(data.toString());                // Manda messaggio WebSocket
-        console.log("Sent to React client:", data.toString());
-      }
+    messages.forEach(msg => {
+      console.log('📥 Received from C:', msg);
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(msg); // Invia un JSON alla volta
+          console.log("📤 Sent to React client:", msg);
+        }
+      });
     });
   });
 

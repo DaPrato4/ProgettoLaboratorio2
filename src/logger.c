@@ -139,12 +139,28 @@ void init_tcp_logger() {
 
 void send_log_json(const log_msg_t* msg) {
     if (!tcp_enabled || tcp_sock_fd < 0) return;
+    char mess[256] = "";
+    // int temp_int = 0;
+
+    if(strcmp(msg->event, "RESCUER_INIT") == 0) {
+        int x, y;
+        char type[32], type2[32];
+        // Usa %[^)] per leggere tutto fino a ')'
+        if (sscanf(msg->message, "[(%31[^)]) (%d,%d)] Creato gemello digitale per %31[^]]", type, &x, &y, type2) == 4) {
+            snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"x\":%d, \"y\":%d",type, x, y);
+        } else {
+            return; // fallback
+        }
+    }    
+    else{
+        return;
+    }
 
     char json_msg[512];
     // Serializza semplice JSON
     snprintf(json_msg, sizeof(json_msg),
-             "{\"id\":\"%s\", \"event\":\"%s\", \"message\":\"%s\"}\n",
-             msg->id, msg->event, msg->message);
+             "{\"id\":\"%s\", \"event\":\"%s\", %s}\n",
+             msg->id, msg->event, mess);
 
     // Invia la stringa JSON via TCP
     ssize_t sent = send(tcp_sock_fd, json_msg, strlen(json_msg), 0);
