@@ -56,8 +56,8 @@ void* rescuer_thread(void* arg) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "[%s #%d (%s)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, r->id, stato(r->status) ,r->x, r->y, current_em->x, current_em->y,travel_time);
-        char id [3];
-        snprintf(id, sizeof(id), "%d", r->id);
+        char id [4];
+        snprintf(id, sizeof(id), "0%02d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(travel_time); // Simula il tempo di viaggio
 
@@ -69,9 +69,10 @@ void* rescuer_thread(void* arg) {
         r->status = ON_SCENE;
         printf("🚨 [%s #%d] Intervento in corso a (%d,%d) in %d sec.\n",
             r->rescuer->rescuer_type_name, r->id, r->x, r->y, emergency_time);
+
         snprintf(log_msg, sizeof(log_msg), "[%s #%d (%s)] Intervento in corso a (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, r->id, stato(r->status), r->x, r->y, emergency_time);
-        snprintf(id, sizeof(id), "%d", r->id);
+        snprintf(id, sizeof(id), "0%02d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(emergency_time); // Simula il tempo di intervento
         // wrapper->current_em->status = COMPLETED;
@@ -83,11 +84,12 @@ void* rescuer_thread(void* arg) {
         r->y = r->rescuer->y;
         r->status = RETURNING_TO_BASE;
         update_emergency_status(current_em, COMPLETED);
+    
         printf("🏡 [%s #%d] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.\n",
             r->rescuer->rescuer_type_name, r->id,current_em->x, current_em->y, r->x, r->y, travel_time);
         snprintf(log_msg, sizeof(log_msg), "[%s #%d (%s)] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, r->id, stato(r->status),current_em->x, current_em->y, r->x, r->y, travel_time);
-        snprintf(id, sizeof(id), "%d", r->id);
+        snprintf(id, sizeof(id), "0%02d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(travel_time); // Simula il tempo di viaggio di ritorno
         
@@ -95,7 +97,7 @@ void* rescuer_thread(void* arg) {
         r->status = IDLE;
         printf("✅ [%s #%d] Intervento completato.\n", r->rescuer->rescuer_type_name, r->id);
         snprintf(log_msg, sizeof(log_msg), "[%s #%d (%s)] Intervento completato.", r->rescuer->rescuer_type_name, r->id, stato(r->status));
-        snprintf(id, sizeof(id), "%d", r->id);
+        snprintf(id, sizeof(id), "0%02d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         pthread_mutex_unlock(&wrapper->mutex);
         

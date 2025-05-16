@@ -33,7 +33,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
     if (!name_start || !name_end || name_end <= name_start) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("112", "FILE_PARSING", log_msg);
+        log_event("102", "FILE_PARSING", log_msg);
         return -1;
     }
     *name_end = '\0';
@@ -45,7 +45,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
     if (!num_start || !num_end || num_end <= num_start) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("112", "FILE_PARSING", log_msg);
+        log_event("102", "FILE_PARSING", log_msg);
         return -1;
     }
     *num_end = '\0';
@@ -57,7 +57,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
     if (!speed_start || !speed_end || speed_end <= speed_start) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("112", "FILE_PARSING", log_msg);
+        log_event("102", "FILE_PARSING", log_msg);
         return -1;
     }
     *speed_end = '\0';
@@ -69,7 +69,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
     if (!base_start || !base_end || base_end <= base_start) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("112", "FILE_PARSING", log_msg);
+        log_event("102", "FILE_PARSING", log_msg);
         return -1;
     }
     *base_end = '\0';
@@ -86,7 +86,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
     if (t != 2 || token != NULL) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("112", "FILE_PARSING", log_msg);
+        log_event("102", "FILE_PARSING", log_msg);
         return -1;
     }
 
@@ -114,7 +114,7 @@ int load_rescuer_types(
     if (!file) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
-        log_event("112", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        log_event("102", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         return -1;
     } // Errore apertura file
 
@@ -128,7 +128,7 @@ int load_rescuer_types(
         if (parse_rescuer_type_line(line, &(*out_types)[count]) == 0) {
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) correttamente caricata da file", (*out_types)[count].rescuer_type.rescuer_type_name);
-            log_event("012", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("002", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
             count++;
         }
     }

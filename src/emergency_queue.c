@@ -49,8 +49,8 @@ void emergency_queue_add(emergency_t* e) {
         fprintf(stderr, "[queue] Errore: coda piena, emergenza scartata!\n");
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: coda piena, emergenza scartata!");
-        char id [3];
-        snprintf(id, sizeof(id), "%d", e->id);
+        char id [4];
+        snprintf(id, sizeof(id), "1%02d", e->id);
         log_event(id, "MESSAGE_QUEUE", log_msg); // Logga lo scarto dell'emergenza
         pthread_mutex_unlock(&queue_mutex);  // Rilascia il mutex prima di uscire
         return;
@@ -58,8 +58,8 @@ void emergency_queue_add(emergency_t* e) {
 
     char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente aggiunta alla coda", e->type.emergency_desc);
-        char id [3];
-        snprintf(id, sizeof(id), "%d", e->id);
+        char id [4];
+        snprintf(id, sizeof(id), "0%02d", e->id);
         log_event(id, "MESSAGE_QUEUE", log_msg); // Logga L'aggiunta dell'emergenza
 
     // Inserisce l'emergenza in coda e aggiorna l'indice di tail
@@ -73,7 +73,7 @@ void emergency_queue_add(emergency_t* e) {
     printf("[queue] Coda attuale: %d emergenze\n", count);
     for (int i = 0; i < count; i++) {
         int index = (head + i) % MAX_EMERGENCIES;
-        printf("[queue] [%d] %s (%d,%d) stato [%d]\n", i, emergency_queue[index]->type.emergency_desc, emergency_queue[index]->x, emergency_queue[index]->y, emergency_queue[index]->status);
+        printf("[queue] [%d] %s (%d,%d) stato [%d] id[%d]\n", i, emergency_queue[index]->type.emergency_desc, emergency_queue[index]->x, emergency_queue[index]->y, emergency_queue[index]->status, emergency_queue[index]->id);
         //stampa tutti i dati dell'emergenza
         // printf("[queue] [emergenza] %s\n", emergency_queue[index].type.emergency_desc);
         // printf("[queue] [status] %d\n", emergency_queue[index].status);

@@ -37,10 +37,10 @@ void* scheduler_thread_fun(void* arg) {
             printf("❌ [SCHEDULER] Priorità non valida: %d\n", e->type.priority);
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Priorità non valida: %d", e->type.priority);
-            char id [3];
-            snprintf(id, sizeof(id), "%d", e->id);
+            char id [4];
+            snprintf(id, sizeof(id), "1%02d", e->id);
             log_event(id, "EMERGENCY_SCHEDULER", log_msg);
-            update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
+            update_emergency_status(e, CANCELED); // Aggiorna lo stato dell'emergenza
             break;
         }
 
@@ -53,14 +53,15 @@ void* scheduler_thread_fun(void* arg) {
             }
         }
         // Se il tempo di gestione supera il massimo, scarta l'emergenza
+        printf("🧭 [SCHEDULER] Tempo di gestione stimato: %d secondi\n", time_to_manage);
         if (max_time > 0 && time_to_manage > max_time) {
             printf("❌ [SCHEDULER] Emergenza scartata: %s (%d,%d), tempo massimo superato\n",
                    e->type.emergency_desc, e->x, e->y);
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza scartata: %s (%d,%d), richiesti %d secondi per la gestione (priorità %d)",
-                   e->type.emergency_desc, e->x, e->y, max_time, e->type.priority);
-            char id [3];
-            snprintf(id, sizeof(id), "%d", e->id);
+                   e->type.emergency_desc, e->x, e->y, time_to_manage, e->type.priority);
+            char id [4];
+            snprintf(id, sizeof(id), "1%02d", e->id);
             log_event(id, "EMERGENCY_SCHEDULER", log_msg);
             update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
             continue; // Passa alla prossima emergenza
@@ -108,9 +109,9 @@ void* scheduler_thread_fun(void* arg) {
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Non ci sono abbastanza soccorritori disponibili per: %s",
                     req.type->rescuer_type_name);
-                // char id [3];
-                // snprintf(id, sizeof(id), "%d", r->id);
-                log_event("ID_EMERGENZA", "EMERGENCY_SCHEDULER_TIMEOUT", log_msg);
+                char id [4];
+                snprintf(id, sizeof(id), "1%02d", e->id);
+                log_event(id, "EMERGENCY_SCHEDULER", log_msg);
                 update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
                 //emergency_queue_add(e); // la reinserisci in coda come TIMEOUT
                 // free(digital_twins_selected); // libera memoria
@@ -144,18 +145,18 @@ void* scheduler_thread_fun(void* arg) {
                 if(j != assigned-1) strcat(rescuers_assigned, ", ");
             }
             update_emergency_status(e, ASSIGNED); // Aggiorna lo stato dell'emergenza
-            printf("✅ [SCHEDULER] Assegnati %d soccorritori all'emergenza: %s\n",
-                   assigned, e->type.emergency_desc);
+            printf("✅ [SCHEDULER] Assegnati %d soccorritori all'emergenza: %s (id: %02d)\n",
+                   assigned, e->type.emergency_desc, e->id);
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Assegnati %d soccorritori (%s) all'emergenza: %s",
                    assigned,rescuers_assigned ,e->type.emergency_desc);
-            char id [3];
-            snprintf(id, sizeof(id), "%d", e->x);
+            char id [4];
+            snprintf(id, sizeof(id), "0%02d", e->x);
             log_event(id, "EMERGENCY_SCHEDULER", log_msg);
         }
 
         // Attendi un attimo prima di gestire la prossima
-        usleep(200000); // 0.2s per non sovraccaricare
+        // usleep(10000); // 0.2s per non sovraccaricare
     }
 
     return NULL;

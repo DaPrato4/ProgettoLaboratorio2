@@ -116,20 +116,20 @@ int main() {
         
     //------PROVE CODA------
     emergency_queue_init(); // Inizializza la coda delle emergenze
-    emergency_t* emergenza1 = malloc(sizeof(emergency_t));
-    *emergenza1 = (emergency_t){ .type = emergency_types[0], .status = WAITING, .x = 10, .y = 20, .time = time(NULL), .rescuer_count = 0, .rescuers_dt = NULL };
-    emergency_t* emergenza2 = malloc(sizeof(emergency_t));
-    *emergenza2 = (emergency_t){ .type = emergency_types[1], .status = WAITING, .x = 30, .y = 40, .time = time(NULL), .rescuer_count = 0, .rescuers_dt = NULL };
-    // Aggiunge le emergenze alla coda
-    emergency_queue_add(emergenza1); // Aggiunge l'emergenza alla coda
-    emergency_queue_add(emergenza2); // Aggiunge l'emergenza alla coda
-    emergency_t* emergenza3 = emergency_queue_get(); // Ottiene l'emergenza dalla coda
-    printf("Emergenza ottenuta dalla coda: %d\n", emergenza3->status); // Stampa l'emergenza ottenuta
-    emergency_t* emergenza4 = emergency_queue_get(); // Ottiene l'emergenza dalla coda
-    printf("Emergenza ottenuta dalla coda: %d\n", emergenza4->status); // Stampa l'emergenza ottenuta
+    // emergency_t* emergenza1 = malloc(sizeof(emergency_t));
+    // *emergenza1 = (emergency_t){ .type = emergency_types[0], .status = WAITING, .x = 10, .y = 20, .time = time(NULL), .rescuer_count = 0, .rescuers_dt = NULL };
+    // emergency_t* emergenza2 = malloc(sizeof(emergency_t));
+    // *emergenza2 = (emergency_t){ .type = emergency_types[1], .status = WAITING, .x = 30, .y = 40, .time = time(NULL), .rescuer_count = 0, .rescuers_dt = NULL };
+    // // Aggiunge le emergenze alla coda
+    // emergency_queue_add(emergenza1); // Aggiunge l'emergenza alla coda
+    // emergency_queue_add(emergenza2); // Aggiunge l'emergenza alla coda
+    // emergency_t* emergenza3 = emergency_queue_get(); // Ottiene l'emergenza dalla coda
+    // printf("Emergenza ottenuta dalla coda: %d\n", emergenza3->status); // Stampa l'emergenza ottenuta
+    // emergency_t* emergenza4 = emergency_queue_get(); // Ottiene l'emergenza dalla coda
+    // printf("Emergenza ottenuta dalla coda: %d\n", emergenza4->status); // Stampa l'emergenza ottenuta
 
 
-    //------PROVE MQ------
+    //------AVVIO MQ------
     printf("\n\n\nAvvio del thread ricevitore della coda...\n");
     pthread_t mq_thread;
     start_mq_receiver_thread(emergency_types,emergency_count, &env_config , &mq_thread); // Avvia il thread per ricevere le emergenze dalla coda

@@ -44,7 +44,7 @@ int parse_emergency_type_line(
     if (!name_start || !name_end || name_end <= name_start){
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("112", "FILE_PARSING", log_msg);
+        log_event("103", "FILE_PARSING", log_msg);
         return -1; // Errore: formato non valido
     };
     *name_end = '\0'; // Termina la stringa del nome
@@ -56,7 +56,7 @@ int parse_emergency_type_line(
     if (!priority_start || !priority_end || priority_end <= priority_start) {
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-            log_event("112", "FILE_PARSING", log_msg);
+            log_event("103", "FILE_PARSING", log_msg);
             return -1; // Errore: formato non valido
         }
     *priority_end = '\0'; // Termina la stringa della priorità
@@ -133,7 +133,7 @@ int load_emergency_types(
     if (!file) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
-        log_event("012", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        log_event("103", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         return -1;
     } // Errore apertura file
 
@@ -150,11 +150,11 @@ int load_emergency_types(
             count++;
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente caricata da file", types[count - 1].emergency_desc);
-            log_event("112", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("003", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         }else{
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore nel caricamento dell'emergenza da file: (%s)", line);
-            log_event("112", "FILE_PARSING", log_msg); // Logga l'errore
+            log_event("103", "FILE_PARSING", log_msg); // Logga l'errore
         }
     }
 

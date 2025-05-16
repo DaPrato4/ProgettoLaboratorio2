@@ -56,7 +56,7 @@ void* mq_receiver_thread(void* arg) {
             // Logga l'evento
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Ricevuta emergenza: %s luogo:(%d,%d) ora:%ld", req.emergency_name, req.x, req.y, (long)&req.timestamp);
-            log_event("010", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza Ricevuta
+            log_event("011", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza Ricevuta
             
             // Controlla se le coordinate sono valide
             if (req.x < 0 || req.x >= env_data->width || req.y < 0 || req.y >= env_data->height) {
@@ -64,7 +64,7 @@ void* mq_receiver_thread(void* arg) {
                 // Logga l'errore
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Coordinate non valide: (%d,%d)", req.x, req.y);
-                log_event("111", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
+                log_event("112", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
                 continue;
             }
 
@@ -80,14 +80,14 @@ void* mq_receiver_thread(void* arg) {
                 // Logga l'errore
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza non riconosciuto: %s", req.emergency_name);
-                log_event("111", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
+                log_event("112", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
                 continue;
             }else {
                 printf("✅ Tipo di emergenza riconosciuto: %s\n", req.emergency_name);
                 // Logga l'evento
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza riconosciuto: %s", req.emergency_name);
-                log_event("011", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
+                log_event("012", "MESSAGE_QUEUE", log_msg); // Logga l'emergenza caricata
                 emergency_t* em = malloc(sizeof(emergency_t)); // Alloca memoria per l'emergenza
                 memset(em, 0, sizeof(emergency_t)); // Inizializza la struttura emergency_t a zero
                 em->type = emergency_types[i]; // Associa il tipo di emergenza
