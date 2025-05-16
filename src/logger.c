@@ -145,9 +145,19 @@ void send_log_json(const log_msg_t* msg) {
     if(strcmp(msg->event, "RESCUER_INIT") == 0) {
         int x, y;
         char type[32], type2[32];
-        // Usa %[^)] per leggere tutto fino a ')'
+        //%[^)] per leggere tutto fino a ')'
         if (sscanf(msg->message, "[(%31[^)]) (%d,%d)] Creato gemello digitale per %31[^]]", type, &x, &y, type2) == 4) {
             snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"x\":%d, \"y\":%d",type, x, y);
+        } else {
+            return; // fallback
+        }
+    }    
+    else if(strcmp(msg->event, "EMERGENCY_INIT") == 0) {
+        int x, y;
+        char type[32], status[32];
+        //%[^)] per leggere tutto fino a ')'
+        if (sscanf(msg->message, "[(%31[^)]) (%d,%d) (%31[^)])] Emergenza correttamente aggiunta alla coda", type, &x, &y, status) == 4) {
+            snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"x\":%d, \"y\":%d, \"status\":\"%s\"",type, x, y, status);
         } else {
             return; // fallback
         }

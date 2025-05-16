@@ -32,10 +32,7 @@ function App() {
   const [animations, setAnimations] = useState<Animation[]>([]);
 
   //POSIZIONI DI PROVA TEMPORANEE
-  const [emergencies,setEmergencies] = useState<Emergency[]>([
-    { id: 1, type: "incendio", pos: { x: 0, y: 0 }, status: "attivo" },
-    { id: 2, type: "incendio", pos: { x: 10, y: 20 }, status: "attivo" },
-  ]);
+  const [emergencies,setEmergencies] = useState<Emergency[]>([]);
   const [rescuers, setRescuers] = useState<Rescuer[]>([]);
 
 
@@ -163,6 +160,23 @@ function App() {
             },
           ];
         });
+      }else if (evt === "EMERGENCY_INIT") {
+        const { x, y, type,  status } = data;
+        const newId = parseInt(id);
+
+        setEmergencies((prev) => {
+          if (prev.some((e) => e.id === newId)) return prev;
+
+          return [
+            ...prev,
+            {
+              id: newId,
+              type,
+              pos: { x, y },
+              status,
+            },
+          ];
+        });
       }
 
     } catch (err) {
@@ -206,21 +220,26 @@ function App() {
           <div className="min-w-[350px]">
             <h1 className="text-2xl font-bold mb-4">🚑 Soccorritori</h1>
             <div className=" mb-2">
-              <ul className="flex">
+              <ul className="flex pr-2">
                 <li className="w-1/12">ID</li>
                 <li className="w-3/12">Tipo</li>
                 <li className="w-4/12">Posizione</li>
                 <li className="w-4/12">Stato</li>
               </ul>
             </div>
-            <ul className="overflow-y-auto" style={{ maxHeight: `${GRID_HEIGHT * CELL_SIZE-90}px` }}>
+            <ul
+              className="overflow-y-scroll w-full scrollbar-overlay"
+              style={{
+                maxHeight: `${GRID_HEIGHT * CELL_SIZE - 90}px`,
+              }}
+            >
               {rescuers.map((rescuer) => (
-                <ul key={rescuer.id} className="mb-2 flex">
-                  <li className="w-1/12">{rescuer.id}</li>
-                  <li className="w-3/12">{rescuer.type}</li>
-                  <li className="w-4/12"> ({rescuer.pos.x.toFixed(2)}, {rescuer.pos.y.toFixed(2)})</li>
-                  <li className="w-4/12">{rescuer.status}</li>
-                </ul>
+                <li key={rescuer.id} className="mb-2 flex">
+                  <span className="w-1/12">{rescuer.id}</span>
+                  <span className="w-3/12">{rescuer.type}</span>
+                  <span className="w-4/12">({rescuer.pos.x.toFixed(2)}, {rescuer.pos.y.toFixed(2)})</span>
+                  <span className="w-4/12">{rescuer.status}</span>
+                </li>
               ))}
             </ul>
           </div>
@@ -235,14 +254,22 @@ function App() {
                 <li className="w-4/12">Stato</li>
               </ul>
             </div>
-            <ul className="overflow-y-auto" style={{ maxHeight: `${GRID_HEIGHT * CELL_SIZE-90}px` }}>
+            <ul
+              className="overflow-y-auto w-full"
+              style={{
+                maxHeight: `${GRID_HEIGHT * CELL_SIZE - 90}px`,
+                scrollbarGutter: "stable overlay",
+              }}
+            >
               {emergencies.map((emergency) => (
-                <ul key={emergency.id} className="mb-2 flex">
-                  <li className="w-1/12">{emergency.id}</li>
-                  <li className="w-3/12">{emergency.type}</li>
-                  <li className="w-4/12"> ({emergency.pos.x.toFixed(2)}, {emergency.pos.y.toFixed(2)})</li>
-                  <li className="w-4/12">{emergency.status}</li>
-                </ul>
+                <li key={emergency.id} className="mb-2 flex">
+                  <span className="w-1/12">{emergency.id}</span>
+                  <span className="w-3/12">{emergency.type}</span>
+                  <span className="w-4/12">
+                    ({emergency.pos.x.toFixed(2)}, {emergency.pos.y.toFixed(2)})
+                  </span>
+                  <span className="w-4/12">{emergency.status}</span>
+                </li>
               ))}
             </ul>
           </div>
