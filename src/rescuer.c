@@ -52,10 +52,10 @@ void* rescuer_thread(void* arg) {
         //Partenza verso il luogo dell'emergenza
         r->status = EN_ROUTE_TO_SCENE;
         printf("🚀 [(%s) (%s)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.\n",
-            r->rescuer->rescuer_type_name, stato(r->status), r->x, r->y, current_em->x, current_em->y,travel_time);
+            r->rescuer->rescuer_type_name, stato(r->status), current_em->x, current_em->y, r->x, r->y, travel_time);
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s) (%d,%d) (%d)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.",
-            r->rescuer->rescuer_type_name, stato(r->status), r->x, r->y, travel_time, r->x, r->y, current_em->x, current_em->y,travel_time);
+            r->rescuer->rescuer_type_name, stato(r->status), current_em->x, current_em->y, travel_time, r->x, r->y, current_em->x, current_em->y,travel_time);
         char id [4];
         snprintf(id, sizeof(id), "0%02d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);

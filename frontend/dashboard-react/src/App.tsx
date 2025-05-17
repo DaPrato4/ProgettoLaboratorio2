@@ -39,22 +39,28 @@ function App() {
 
   // Funzione per avviare l'animazione
   function moveRescuerTo(id: number, to: Pos, seconds: number) {
-    setRescuers((prev) =>
-      prev.map((r) =>
+    setRescuers((prevRescuers) => {
+      const rescuer = prevRescuers.find((r) => r.id === id);
+      if (!rescuer) return prevRescuers;
+
+      // Setta l'animazione con i dati CORRETTI
+      setAnimations((prevAnims) => [
+        ...prevAnims.filter((a) => a.id !== id),
+        {
+          id,
+          from: { ...rescuer.pos },
+          to,
+          duration: seconds * 1000,
+          startTime: performance.now(),
+        },
+      ]);
+
+      return prevRescuers.map((r) =>
         r.id === id ? { ...r, target: to } : r
-      )
-    );
-    setAnimations((prev) => [
-      ...prev.filter((a) => a.id !== id), // rimuovi eventuali animazioni precedenti per quell'id
-      {
-        id,
-        from: rescuers.find((r) => r.id === id)?.pos ?? { x: 0, y: 0 },
-        to,
-        duration: seconds * 1000,
-        startTime: performance.now(),
-      },
-    ]);
+      );
+    });
   }
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -177,6 +183,21 @@ function App() {
             },
           ];
         });
+      }else if (evt === "RESCUER_STATUS") {
+        const { x, y,  status, time } = data;
+        const newId = parseInt(id);
+
+        if (status != "IDLE") {
+          moveRescuerTo(newId, { x: x, y: y }, time);
+          console.log("🚑", newId, "sta muovendo verso", x, y);
+        }
+
+        setRescuers((prev) =>
+          prev.map((r) =>
+            r.id === newId ? { ...r, status } : r
+          )
+        );
+
       }
 
     } catch (err) {
@@ -189,25 +210,8 @@ function App() {
 
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-white">
-      <h1 className="text-2xl font-bold mb-4">🚨 Emergency Grid Monitor</h1>
-      <button
-        className="mb-4 px-4 py-2 bg-blue-600 rounded"
-        onClick={() => moveRescuerTo(Math.floor(Math.random() * rescuers.length), { x: 100, y: 100 }, 10)}
-      >
-        Muovi un soccorritore
-      </button>
-      <button
-        className="mb-4 px-4 py-2 bg-blue-600 rounded"
-        onClick={() => setEmergencies((prev) => [...prev, { id: prev.length + 1, type: "bufera", pos: {x: Math.random() * GRID_WIDTH, y: Math.random() * GRID_HEIGHT }, status: "attivo" }])}
-      >
-        Genera un' emergenza
-      </button>
-      <button
-        className="mb-4 px-4 py-2 bg-blue-600 rounded"
-        onClick={() => setRescuers((prev) => [...prev, { id: prev.length + 1, type: "guardia", pos: { x: Math.random() * GRID_WIDTH, y: Math.random() * GRID_HEIGHT }}])}
-      >
-        Genera un' soccorritore
-      </button>
+      <h1 className="text-4xl font-bold mb-16">🚨 Emergency Grid Monitor</h1>
+
       <div className="flex gap-10">
         <canvas
           ref={canvasRef}

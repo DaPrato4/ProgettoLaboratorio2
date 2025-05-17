@@ -162,6 +162,36 @@ void send_log_json(const log_msg_t* msg) {
             return; // fallback
         }
     }    
+    else if(strcmp(msg->event, "RESCUER_STATUS") == 0) {
+        int x, y, time, t1, t2, t3, t4, t5;
+        char type[32], status[32];
+        //%[^)] per leggere tutto fino a ')'
+        printf("Message: %s\n", msg->message);
+
+        if (sscanf(msg->message, "[(%31[^)]) (%31[^)]) (%d,%d) (%d)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.",
+                type, status, &x, &y, &time, &t1, &t2, &t3, &t4, &t5) == 10) {
+            // EN_ROUTE_TO_SCENE
+            snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"x\":%d, \"y\":%d, \"time\":%d, \"status\":\"%s\"",
+                type, x, y,time, status);
+        } else if (sscanf(msg->message, "[(%31[^)]) (%31[^)]) (%d,%d) (%d)] Intervento in corso a (%d,%d) in %d sec.",
+                type, status, &x, &y, &time, &t1, &t2, &t3) == 8) {
+            // ON_SCENE
+            snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"x\":%d, \"y\":%d, \"time\":%d, \"status\":\"%s\"",
+            type, x, y,time, status);
+        } else if (sscanf(msg->message, "[(%31[^)]) (%31[^)]) (%d,%d) (%d)] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.",
+                type, status, &x, &y, &time, &t1, &t2, &t3, &t4, &t5) == 10) {
+            // RETURNING_TO_BASE
+            snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"x\":%d, \"y\":%d, \"time\":%d, \"status\":\"%s\"",
+                type, x, y,time, status);
+        } else if (sscanf(msg->message, "[(%31[^)]) (%31[^)])] Intervento completato.",
+                type, status) == 2) {
+            // IDLE
+            snprintf(mess, sizeof(mess),"\"type\":\"%s\", \"status\":\"%s\"",
+                type, status);
+        } else {
+            return; // fallback
+        }
+    }    
     else{
         return;
     }
