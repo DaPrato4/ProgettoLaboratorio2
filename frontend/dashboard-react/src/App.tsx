@@ -78,7 +78,7 @@ function App() {
 
       emergencies.forEach(({pos}) => {
         ctx.fillStyle = "#ef4444";
-        ctx.fillRect(pos.x * CELL_SIZE, pos.y * CELL_SIZE, CELL_SIZE * 5, CELL_SIZE * 5);
+        ctx.fillRect(pos.x * CELL_SIZE - CELL_SIZE*2, pos.y * CELL_SIZE - CELL_SIZE*2, CELL_SIZE * 5, CELL_SIZE * 5);
       });
 
       ctx.fillStyle = "#3b82f6";
@@ -187,9 +187,8 @@ function App() {
         const { x, y,  status, time } = data;
         const newId = parseInt(id);
 
-        if (status != "IDLE") {
+        if (status != "IDLE" && status != "ON_SCENE" && time > 0) {
           moveRescuerTo(newId, { x: x, y: y }, time);
-          console.log("🚑", newId, "sta muovendo verso", x, y);
         }
 
         setRescuers((prev) =>
@@ -197,6 +196,23 @@ function App() {
             r.id === newId ? { ...r, status } : r
           )
         );
+
+      }else if (evt === "EMERGENCY_STATUS") {
+        const {status} = data;
+        const newId = parseInt(id);
+
+        setEmergencies((prev) =>
+          prev.map((r) =>
+            r.id === newId ? { ...r, status } : r
+          )
+        );
+
+        if (status === "TIMEOUT" || status === "COMPLETED") {
+          setTimeout(() => {
+            setEmergencies((prev) => prev.filter((e) => e.id !== newId)); 
+          }, 5000);
+          return;
+        }
 
       }
 
@@ -212,15 +228,17 @@ function App() {
     <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-white">
       <h1 className="text-4xl font-bold mb-16">🚨 Emergency Grid Monitor</h1>
 
-      <div className="flex gap-10">
-        <canvas
-          ref={canvasRef}
-          width={GRID_WIDTH * CELL_SIZE}
-          height={GRID_HEIGHT * CELL_SIZE}
-          className="border border-green-500 rounded bg-amber-50"
-        />
+      <div className="flex flex-col lg:flex-row gap-10 w-full justify-center items-center lg:items-start">
+        <div className="flex flex-col items-center w-full">
+          <canvas
+            ref={canvasRef}
+            width={GRID_WIDTH * CELL_SIZE}
+            height={GRID_HEIGHT * CELL_SIZE}
+            className="border border-blue-500 rounded-xl bg-neutral-300 mx-auto"
+          />
+        </div>
 
-        <div className="flex gap-3.5 mb-2">
+        <div className="flex gap-3.5 mb-2 justify-center">
           <div className="min-w-[350px]">
             <h1 className="text-2xl font-bold mb-4">🚑 Soccorritori</h1>
             <div className=" mb-2">
@@ -241,7 +259,7 @@ function App() {
                 <li key={rescuer.id} className="mb-2 flex">
                   <span className="w-1/12">{rescuer.id}</span>
                   <span className="w-3/12">{rescuer.type}</span>
-                  <span className="w-4/12">({rescuer.pos.x.toFixed(2)}, {rescuer.pos.y.toFixed(2)})</span>
+                  <span className="w-4/12">({rescuer.pos.x.toFixed(1)}, {rescuer.pos.y.toFixed(1)})</span>
                   <span className="w-4/12">{rescuer.status}</span>
                 </li>
               ))}
@@ -270,7 +288,7 @@ function App() {
                   <span className="w-1/12">{emergency.id}</span>
                   <span className="w-3/12">{emergency.type}</span>
                   <span className="w-4/12">
-                    ({emergency.pos.x.toFixed(2)}, {emergency.pos.y.toFixed(2)})
+                    ({emergency.pos.x.toFixed(1)}, {emergency.pos.y.toFixed(1)})
                   </span>
                   <span className="w-4/12">{emergency.status}</span>
                 </li>

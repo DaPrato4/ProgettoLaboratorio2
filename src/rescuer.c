@@ -37,6 +37,7 @@ void* rescuer_thread(void* arg) {
 
         //Calcolo tempi di viaggio
         int travel_time = ( abs(r->x - current_em->x) + abs(r->y - current_em->y) ) / r->rescuer->speed;
+        if(travel_time == 0) travel_time = 1; // per evitare viaggi istantanei
         int index = -1;
         for (int i = 0; i < current_em->type.rescuers_req_number; i++) {
             if (strcmp(current_em->type.rescuers[i].type->rescuer_type_name,

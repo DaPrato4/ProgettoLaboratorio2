@@ -192,15 +192,27 @@ void send_log_json(const log_msg_t* msg) {
             return; // fallback
         }
     }    
+    else if(strcmp(msg->event, "EMERGENCY_STATUS") == 0) {
+        char status[32];
+        //%[^)] per leggere tutto fino a ')'
+        if (sscanf(msg->message, "[%31[^]]] Stato di emergenza aggiornato",status) == 1) {
+            snprintf(mess, sizeof(mess),"\"status\":\"%s\"",status);
+        } else {
+            return; // fallback
+        }
+    }    
     else{
         return;
     }
 
     char json_msg[512];
     // Serializza semplice JSON
+    char id[32];
+    int num = atoi(msg->id);
+    snprintf(id, sizeof(id), "0%02d", num % 100);
     snprintf(json_msg, sizeof(json_msg),
              "{\"id\":\"%s\", \"event\":\"%s\", %s}\n",
-             msg->id, msg->event, mess);
+             id, msg->event, mess);
 
     // Invia la stringa JSON via TCP
     ssize_t sent = send(tcp_sock_fd, json_msg, strlen(json_msg), 0);
