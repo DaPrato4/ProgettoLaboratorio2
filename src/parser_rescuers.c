@@ -126,9 +126,6 @@ int load_rescuer_types(
     while (fgets(line, sizeof(line), file)) {
         if (strlen(trim(line)) == 0) continue;
         if (parse_rescuer_type_line(line, &(*out_types)[count]) == 0) {
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) correttamente caricata da file", (*out_types)[count].rescuer_type.rescuer_type_name);
-            log_event("002", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
             count++;
         }
     }

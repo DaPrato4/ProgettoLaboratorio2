@@ -17,11 +17,6 @@ int main() {
     //------LOGGER------
     start_logger_thread(); // Avvia il thread logger
     printf("Avvio del thread logger...\n");
-    // log_event("SYSTEM", "START", "Sistema avviato"); // Logga l'evento di avvio del sistema
-    // log_event("MQ_RECEIVER", "START", "Thread ricevitore della coda avviato"); // Logga l'evento di avvio del thread ricevitore
-    // log_event("SCHEDULER", "START", "Thread scheduler avviato"); // Logga l'evento di avvio del thread scheduler
-    // log_event("RESCUER", "START", "Thread soccorritore avviato"); // Logga l'evento di avvio del thread soccorritore
-
 
     //------parsing dell'ambiente------
     env_config_t env_config;
@@ -54,7 +49,17 @@ int main() {
 
     rescuer_type_t rescuer_types[rescuer_count];
     for (int i = 0; i < rescuer_count; ++i) {
-        rescuer_types[i] = rescuer_types_info[i].rescuer_type;
+        if(rescuer_types_info[i].rescuer_type.x > env_config.width || rescuer_types_info[i].rescuer_type.y > env_config.height) {
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) fori limiti di mappa", rescuer_types_info[i].rescuer_type.rescuer_type_name);
+            log_event("102", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        }else{
+            rescuer_types[i] = rescuer_types_info[i].rescuer_type;
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) correttamente caricata da file", rescuer_types_info[i].rescuer_type.rescuer_type_name);
+            log_event("002", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+        }
+        
     }
     int rescuer_types_count = sizeof(rescuer_types) / sizeof(rescuer_types[0]);
 
