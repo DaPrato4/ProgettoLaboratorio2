@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "logger.h"
+#include "macros.h"
 
 int main() {
 
@@ -63,9 +64,11 @@ int main() {
     // Alloca e avvia i thread dei digital twin
     int idx = 0;
     rescuer_thread_t* rescuers_twin_thread = malloc(total_rescuers * sizeof(rescuer_thread_t)); 
+    CHECK_MALLOC(rescuers_twin_thread, label);
     for (int i = 0; i < rescuer_count; ++i) {
         for (int j = 0; j < rescuer_types_info[i].count; ++j) {
             rescuers_twin_thread[idx].twin = malloc(sizeof(rescuer_digital_twin_t));
+            CHECK_MALLOC(rescuers_twin_thread[idx].twin, label);
             rescuers_twin_thread[idx].twin->id = idx;
             rescuers_twin_thread[idx].twin->x = rescuer_types_info[i].rescuer_type.x;
             rescuers_twin_thread[idx].twin->y = rescuer_types_info[i].rescuer_type.y;
@@ -95,6 +98,7 @@ int main() {
 
     // ------ AVVIO THREAD SCHEDULER ------
     scheduler_args_t* args = malloc(sizeof(scheduler_args_t));
+    CHECK_MALLOC(args, label);
     args->rescuer_count = total_rescuers;
     args->rescuers = rescuers_twin_thread;
     pthread_t scheduler_thread;
@@ -102,5 +106,8 @@ int main() {
 
     // Attende la fine del thread scheduler (il programma resta attivo)
     pthread_join(scheduler_thread, NULL);
+    label:
+    printf("❌ Errore durante l'esecuzione del programma\n");
+    free(args);
     return 0;
 }

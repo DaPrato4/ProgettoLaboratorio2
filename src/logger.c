@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "macros.h"
 
 // Dimensione massima della coda dei messaggi di log
 #define LOG_QUEUE_SIZE 1024
@@ -47,6 +48,7 @@ static pthread_t logger_thread;
 // Funzione eseguita dal thread logger: estrae messaggi dalla coda e li scrive su file
 static void* logger_func(void* arg) {
     FILE* f = fopen("system.log", "w"); // Apre il file di log in modalità append
+    CHECK_FOPEN("1020",f, "system.log");
     if (!f) return NULL; // Se non riesce ad aprire il file, termina il thread
     while (logger_running || log_head != log_tail) { // Continua finché il logger è attivo o ci sono messaggi da scrivere
         pthread_mutex_lock(&log_mutex); // Blocca il mutex per accedere alla coda

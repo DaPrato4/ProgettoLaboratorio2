@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "logger.h"
+#include "macros.h"
 #include <stdlib.h>
 
 // Numero massimo di emergenze che la coda può contenere
@@ -103,7 +104,8 @@ void emergency_queue_add(emergency_t* e) {
  * @return Puntatore all'emergenza estratta dalla coda.
  */
 emergency_t* emergency_queue_get() {
-    emergency_t* e = malloc(sizeof(emergency_t)); // Alloca memoria per l'emergenza (verrà sovrascritta)
+    emergency_t* e = NULL; // Alloca memoria per l'emergenza
+
     while (1){  // Ciclo infinito per attendere un'emergenza
     
         pthread_mutex_lock(&queue_mutex);    // Acquisisce il mutex per l'accesso esclusivo

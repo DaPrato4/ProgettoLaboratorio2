@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include "parser_env.h"
 #include "types.h"
+#include "macros.h"
 
 #define MAX_NAME_LEN 64
 
@@ -56,10 +57,7 @@ int main(int argc, char* argv[]) {
     // Apre la coda dei messaggi
     printf("🔓 Apertura coda: %s\n", queue_name);
     mq = mq_open(queue_name, O_WRONLY);
-    if (mq == (mqd_t)-1) {
-        perror("❌ mq_open");
-        return 1;
-    }
+    CHECK_MQ_OPEN(mq, queue_name);
 
     // Modalità da file: invia emergenze lette da file riga per riga
     if (argc == 3 && strcmp(argv[1], "-f") == 0) {

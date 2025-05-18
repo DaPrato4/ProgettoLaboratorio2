@@ -3,6 +3,7 @@
 #include <string.h>
 #include "types.h"
 #include "logger.h"
+#include "macros.h"
 
 #define MAX_LINE_LENGTH 256
 #define MAX_RESCUER_TYPES 32
@@ -126,16 +127,11 @@ int load_rescuer_types(
     int* out_count
 ) {
     FILE* file = fopen(filename, "r");
-    if (!file) {
-        // Se il file non può essere aperto, logga l'errore e ritorna -1
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
-        log_event("102", "FILE_PARSING", log_msg);
-        return -1;
-    } // Errore apertura file
+    CHECK_FOPEN("1020",file, filename);
 
     // Alloca spazio per un massimo di 32 tipi di soccorritore
     *out_types = malloc(sizeof(rescuer_type_info_t) * MAX_RESCUER_TYPES);
+    CHECK_MALLOC(*out_types, fail);
     int count = 0;
     char line[MAX_LINE_LENGTH];
 
@@ -151,4 +147,6 @@ int load_rescuer_types(
 
     fclose(file); // Chiude il file
     return 0;
+    fail:
+    return -1; // Errore: memoria insufficiente
 }

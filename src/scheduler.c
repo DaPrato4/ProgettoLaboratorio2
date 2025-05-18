@@ -6,6 +6,7 @@
 #include <string.h>
 #include "logger.h"
 #include "emergency_status.h"
+#include "macros.h"
 
 /**
  * @brief Funzione eseguita dal thread scheduler.
@@ -77,7 +78,7 @@ void* scheduler_thread_fun(void* arg) {
         int assigned = 0;
         int total_needed = 0;
         // Array dinamico per i soccorritori selezionati
-        rescuer_digital_twin_t** digital_twins_selected = malloc(0);
+        rescuer_digital_twin_t** digital_twins_selected = NULL;
         for (int i = 0; i < e->type.rescuers_req_number; i++) {
             rescuer_request_t req = e->type.rescuers[i];
             // Numero di soccorritori richiesti di un certo tipo
@@ -116,7 +117,7 @@ void* scheduler_thread_fun(void* arg) {
                 snprintf(id, sizeof(id), "1%02d", e->id);
                 log_event(id, "EMERGENCY_SCHEDULER", log_msg);
                 update_emergency_status(e, TIMEOUT); // Aggiorna lo stato dell'emergenza
-                digital_twins_selected = NULL; // resetta il puntatore
+                free(digital_twins_selected);
                 break; // riprendi dal ciclo while
             }
 
@@ -157,4 +158,5 @@ void* scheduler_thread_fun(void* arg) {
     }
 
     return NULL;
+
 }

@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "logger.h"
+#include "macros.h"
 
 #define MAX_MSG_SIZE sizeof(emergency_request_t)
 
@@ -45,16 +46,13 @@ void* mq_receiver_thread(void* arg) {
     attr.mq_curmsgs = 0;
 
     // Prepara il nome della coda
-    char* queue_name = malloc((strlen(env_data->queue) + 1) * sizeof(char));
+    char* queue_name = malloc((strlen(env_data->queue) + 2) * sizeof(char));
+    CHECK_MALLOC(queue_name, fail);
     snprintf(queue_name, strlen(env_data->queue) + 2, "/%s", env_data->queue);
 
     mq_unlink(queue_name); // Rimuove la coda se esiste già
     mq = mq_open(queue_name, O_CREAT | O_RDONLY, 0644, &attr);
-    if (mq == (mqd_t)-1) {
-        printf("📨 [MQ] nome coda: %s\n", queue_name);
-        perror("❌ mq_open");
-        pthread_exit(NULL);
-    }
+    CHECK_MQ_OPEN(mq, queue_name);
     free(queue_name); // Libera la memoria allocata per il nome della coda
 
     int id = 0;  // ID dell'emergenza
@@ -65,7 +63,7 @@ void* mq_receiver_thread(void* arg) {
             // Logga l'evento di ricezione
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Ricevuta emergenza: %s luogo:(%d,%d) ora:%ld", req.emergency_name, req.x, req.y, (long)&req.timestamp);
-            log_event("011", "MESSAGE_QUEUE", log_msg);
+            log_event("0110", "MESSAGE_QUEUE", log_msg);
 
             // Controlla se le coordinate sono valide
             if (req.x < 0 || req.x >= env_data->width || req.y < 0 || req.y >= env_data->height) {
@@ -73,7 +71,7 @@ void* mq_receiver_thread(void* arg) {
                 // Logga l'errore di coordinate non valide
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Coordinate non valide: (%d,%d)", req.x, req.y);
-                log_event("112", "MESSAGE_QUEUE", log_msg);
+                log_event("1120", "MESSAGE_QUEUE", log_msg);
                 continue;
             }
 
@@ -89,16 +87,17 @@ void* mq_receiver_thread(void* arg) {
                 // Logga l'errore di tipo non riconosciuto
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza non riconosciuto: %s", req.emergency_name);
-                log_event("112", "MESSAGE_QUEUE", log_msg);
+                log_event("1120", "MESSAGE_QUEUE", log_msg);
                 continue;
             }else {
                 printf("📨 [MQ] ✅ Tipo di emergenza riconosciuto: %s\n", req.emergency_name);
                 // Logga il riconoscimento del tipo di emergenza
                 char log_msg[256];
                 snprintf(log_msg, sizeof(log_msg), "Tipo di emergenza riconosciuto: %s", req.emergency_name);
-                log_event("012", "MESSAGE_QUEUE", log_msg);
+                log_event("0120", "MESSAGE_QUEUE", log_msg);
                 // Alloca e inizializza la struttura emergency_t
                 emergency_t* em = malloc(sizeof(emergency_t));
+                CHECK_MALLOC(em, fail);
                 memset(em, 0, sizeof(emergency_t));
                 em->type = emergency_types[i];
                 em->x = req.x;
@@ -122,6 +121,9 @@ void* mq_receiver_thread(void* arg) {
         }
     }
 
+    
+
+fail:
     mq_close(mq);
     pthread_exit(NULL);
 }
@@ -136,10 +138,14 @@ void* mq_receiver_thread(void* arg) {
 void start_mq_receiver_thread(emergency_type_t emergency_types[], int emergency_count, env_config_t* env_data, pthread_t* thread) {
 
     struct mq_receiver_args* args = malloc(sizeof(struct mq_receiver_args));
+    CHECK_MALLOC(args, fail);
     args->emergency_types = emergency_types;
     args->emergency_count = emergency_count;
     args->env_data = env_data;
 
     printf("📨 [MQ] Avvio thread ricevitore coda: /%s\n", env_data->queue);
     pthread_create(thread, NULL, mq_receiver_thread, args);
+    return;
+    fail:
+    free(args);
 }

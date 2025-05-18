@@ -3,6 +3,7 @@
 #include <string.h>
 #include "types.h"
 #include "logger.h"
+#include "macros.h"
 
 /**
  * @brief Rimuove spazi iniziali e finali da una stringa.
@@ -29,13 +30,7 @@ static char* trim(char* str) {
  */
 int load_env_config(const char* filename, env_config_t* config) {
     FILE* file = fopen(filename, "r");
-    if (!file) {
-        // Se il file non può essere aperto, logga l'errore e ritorna -1
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
-        log_event("101", "FILE_PARSING", log_msg); // Logga l'errore di apertura file
-        return -1;
-    } // Errore apertura file
+    CHECK_FOPEN("1010",file, filename);
 
     char line[256];
     // Legge il file riga per riga

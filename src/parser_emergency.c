@@ -3,6 +3,7 @@
 #include <string.h>
 #include "types.h"
 #include "logger.h"
+#include "macros.h"
 
 // Definisce la lunghezza massima di una riga letta dal file di configurazione
 #define MAX_LINE_LENGTH 128
@@ -54,7 +55,7 @@ int parse_emergency_type_line(
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("103", "FILE_PARSING", log_msg);
+        log_event("1003", "FILE_PARSING", log_msg);
         return -1; // Errore: formato non valido
     };
     *name_end = '\0'; // Termina la stringa del nome
@@ -67,7 +68,7 @@ int parse_emergency_type_line(
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("103", "FILE_PARSING", log_msg);
+        log_event("1003", "FILE_PARSING", log_msg);
         return -1; // Errore: formato non valido
     }
     *priority_end = '\0'; // Termina la stringa della priorità
@@ -77,6 +78,7 @@ int parse_emergency_type_line(
     char* rescuers_str = priority_end + 1;
     // Alloca un array per le richieste di soccorritori
     rescuer_request_t* rescuers = malloc(sizeof(rescuer_request_t) * MAX_RESCUERS_PER_TYPE);
+    CHECK_MALLOC(rescuers, fail);
     int rescuer_count = 0;
 
     // Divide la stringa delle richieste per ';'
@@ -125,6 +127,8 @@ int parse_emergency_type_line(
     out_type->rescuers_req_number = rescuer_count; // Numero di richieste
 
     return 0; // Successo
+    fail:
+    return -1; // Errore: memoria insufficiente
 }
 
 /**
@@ -145,13 +149,7 @@ int load_emergency_types(
 ) {
     // Apre il file in lettura
     FILE* file = fopen(filename, "r");
-    if (!file) {
-        // Se il file non può essere aperto, logga l'errore e ritorna -1
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
-        log_event("103", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
-        return -1;
-    } // Errore apertura file
+    CHECK_FOPEN("1030",file, filename);
 
     // Alloca spazio per un massimo di 16 tipi di emergenza
     emergency_type_t* types = malloc(sizeof(emergency_type_t) * MAX_EMERGENCY_TYPES);
@@ -167,12 +165,12 @@ int load_emergency_types(
             // Logga il caricamento corretto dell'emergenza
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente caricata da file", types[count - 1].emergency_desc);
-            log_event("003", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("0003", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         }else{
             // Logga l'errore di parsing della riga
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore nel caricamento dell'emergenza da file: (%s)", line);
-            log_event("103", "FILE_PARSING", log_msg); // Logga l'errore
+            log_event("1003", "FILE_PARSING", log_msg); // Logga l'errore
         }
     }
 
