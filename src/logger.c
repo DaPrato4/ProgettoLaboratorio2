@@ -93,12 +93,17 @@ void stop_logger_thread() {
     tcp_sock_fd = -1; // Resetta il file descriptor della socket TCP
 }
 
-// Inserisce un nuovo messaggio di log nella coda
+/**
+ * @brief Inserisce un nuovo messaggio di log nella coda.
+ * @param id ID associato all'evento (es. emergenza, soccorritore, ecc.)
+ * @param event Categoria dell'evento (es. EMERGENCY_STATUS, FILE_PARSING, ecc.)
+ * @param message Messaggio descrittivo dell'evento
+ */
 void log_event(const char* id, const char* event, const char* message) {
     pthread_mutex_lock(&log_mutex); // Blocca il mutex per accedere alla coda
     int next_head = (log_head + 1) % LOG_QUEUE_SIZE; // Calcola la prossima posizione della testa
     if (next_head != log_tail) { // Se la coda non è piena
-        // Copia i dati del messaggio nella coda
+        // Copia i dati del messaggio nella coda circolare
         strncpy(log_queue[log_head].id, id, 31);
         strncpy(log_queue[log_head].event, event, 31);
         strncpy(log_queue[log_head].message, message, 255);
@@ -108,18 +113,24 @@ void log_event(const char* id, const char* event, const char* message) {
         log_head = next_head; // Avanza la testa della coda
         pthread_cond_signal(&log_cond); // Notifica il thread logger della presenza di un nuovo messaggio
     }
+    // Se la coda è piena il messaggio viene scartato (nessun overwrite)
     pthread_mutex_unlock(&log_mutex); // Sblocca il mutex
 }
 
 
 // AGGIUNTE PER INVIO MESSAGGI A SERVER TCP
+
+/**
+ * @brief Inizializza la connessione TCP al server per l'invio dei log.
+ * Se la connessione fallisce, il logging TCP viene disabilitato.
+ */
 void init_tcp_logger() {
     // Inizializza la connessione TCP al server
     // Questa funzione serve per connettersi a un server TCP
     // e inviare i messaggi di log direttamente al server.
     tcp_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (tcp_sock_fd < 0) {
-        perror("Socket creation failed");
+        perror("❌ Socket creation failed");
         tcp_enabled = 0;
     } else {
         struct sockaddr_in addr = {0};
@@ -127,12 +138,14 @@ void init_tcp_logger() {
         addr.sin_port = htons(tcp_server_port);
         inet_pton(AF_INET, tcp_server_ip, &addr.sin_addr);
 
+        // Tenta la connessione al server TCP
         if (connect(tcp_sock_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-            perror("TCP logger: connection failed, continuing without TCP");
+            printf("❌ [TCP]: connection failed, continuing without TCP\n");
             close(tcp_sock_fd);
             tcp_enabled = 0;
         } else {
-            tcp_enabled = 1;
+            printf("✅ TCP logger: connected to %s:%d\n", tcp_server_ip, tcp_server_port);
+            tcp_enabled = 1; // Abilita l'invio TCP se la connessione ha successo
         }
     }
 }
@@ -166,7 +179,6 @@ void send_log_json(const log_msg_t* msg) {
         int x, y, time, t1, t2, t3, t4, t5;
         char type[32], status[32];
         //%[^)] per leggere tutto fino a ')'
-        printf("Message: %s\n", msg->message);
 
         if (sscanf(msg->message, "[(%31[^)]) (%31[^)]) (%d,%d) (%d)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.",
                 type, status, &x, &y, &time, &t1, &t2, &t3, &t4, &t5) == 10) {
@@ -217,7 +229,7 @@ void send_log_json(const log_msg_t* msg) {
     // Invia la stringa JSON via TCP
     ssize_t sent = send(tcp_sock_fd, json_msg, strlen(json_msg), 0);
     if (sent < 0) {
-        perror("Error sending log JSON");
+        perror("❌ Error sending log JSON");
         tcp_enabled = 0;
         close(tcp_sock_fd);
     }

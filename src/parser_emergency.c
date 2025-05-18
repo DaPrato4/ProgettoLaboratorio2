@@ -4,12 +4,18 @@
 #include "types.h"
 #include "logger.h"
 
+// Definisce la lunghezza massima di una riga letta dal file di configurazione
 #define MAX_LINE_LENGTH 128
+// Numero massimo di richieste di soccorritori per tipo di emergenza
 #define MAX_RESCUERS_PER_TYPE 8
+// Numero massimo di tipi di emergenza gestibili
 #define MAX_EMERGENCY_TYPES 16
 
-// Funzione di utilità per rimuovere spazi iniziali e finali da una stringa
-// Restituisce un puntatore alla stringa "ripulita"
+/**
+ * @brief Rimuove spazi iniziali e finali da una stringa.
+ * @param str Stringa da ripulire (modificata in-place).
+ * @return Puntatore alla stringa ripulita.
+ */
 static char* trim(char* str) {
     char* end;
     // Avanza il puntatore finché trova spazi o tab
@@ -22,11 +28,14 @@ static char* trim(char* str) {
     return str;
 }
 
-// Parsing di una singola riga del file di configurazione delle emergenze
-// line: riga da parsare
-// out_type: puntatore dove scrivere la struttura risultante
-// known_types: array di tipi di soccorritori noti
-// known_types_count: numero di tipi di soccorritori noti
+/**
+ * @brief Effettua il parsing di una riga del file di configurazione delle emergenze.
+ * @param line Riga da parsare.
+ * @param out_type Puntatore dove scrivere la struttura risultante.
+ * @param known_types Array di tipi di soccorritori noti.
+ * @param known_types_count Numero di tipi di soccorritori noti.
+ * @return 0 se il parsing ha successo, -1 altrimenti.
+ */
 int parse_emergency_type_line(
     const char* line,
     emergency_type_t* out_type,
@@ -42,6 +51,7 @@ int parse_emergency_type_line(
     char* name_start = strchr(buffer, '[');
     char* name_end = strchr(buffer, ']');
     if (!name_start || !name_end || name_end <= name_start){
+        // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
         log_event("103", "FILE_PARSING", log_msg);
@@ -54,11 +64,12 @@ int parse_emergency_type_line(
     char* priority_start = strchr(name_end + 1, '[');
     char* priority_end = strchr(name_end + 1, ']');
     if (!priority_start || !priority_end || priority_end <= priority_start) {
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-            log_event("103", "FILE_PARSING", log_msg);
-            return -1; // Errore: formato non valido
-        }
+        // Se il formato non è valido, logga l'errore e ritorna -1
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
+        log_event("103", "FILE_PARSING", log_msg);
+        return -1; // Errore: formato non valido
+    }
     *priority_end = '\0'; // Termina la stringa della priorità
     int priority = atoi(trim(priority_start + 1)); // Converte la priorità in intero
 
@@ -116,12 +127,15 @@ int parse_emergency_type_line(
     return 0; // Successo
 }
 
-// Funzione per caricare tutte le emergenze da un file di configurazione
-// filename: nome del file
-// out_types: puntatore dove scrivere l'array di emergenze
-// out_count: puntatore dove scrivere il numero di emergenze caricate
-// known_types: array di tipi di soccorritori noti
-// known_types_count: numero di tipi di soccorritori noti
+/**
+ * @brief Carica tutte le emergenze da un file di configurazione.
+ * @param filename Nome del file di configurazione.
+ * @param out_types Puntatore dove scrivere l'array di emergenze.
+ * @param out_count Puntatore dove scrivere il numero di emergenze caricate.
+ * @param known_types Array di tipi di soccorritori noti.
+ * @param known_types_count Numero di tipi di soccorritori noti.
+ * @return 0 se il caricamento ha successo, -1 altrimenti.
+ */
 int load_emergency_types(
     const char* filename,
     emergency_type_t** out_types,
@@ -129,8 +143,10 @@ int load_emergency_types(
     rescuer_type_t* known_types,
     int known_types_count
 ) {
+    // Apre il file in lettura
     FILE* file = fopen(filename, "r");
     if (!file) {
+        // Se il file non può essere aperto, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore nell' apertura del file %s", filename);
         log_event("103", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
@@ -148,10 +164,12 @@ int load_emergency_types(
         // Parsea la riga e aggiunge la struttura risultante all'array
         if (parse_emergency_type_line(line, &types[count], known_types, known_types_count) == 0) {
             count++;
+            // Logga il caricamento corretto dell'emergenza
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente caricata da file", types[count - 1].emergency_desc);
             log_event("003", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         }else{
+            // Logga l'errore di parsing della riga
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore nel caricamento dell'emergenza da file: (%s)", line);
             log_event("103", "FILE_PARSING", log_msg); // Logga l'errore
