@@ -30,7 +30,8 @@ static char* trim(char* str) {
  */
 int load_env_config(const char* filename, env_config_t* config) {
     FILE* file = fopen(filename, "r");
-    CHECK_FOPEN("1010",file, filename);
+    CHECK_FOPEN("1011",file, filename);
+    log_event("0011", "FILE_PARSING", "File di configurazione aperto correttamente");
 
     char line[256];
     // Legge il file riga per riga
@@ -42,7 +43,7 @@ int load_env_config(const char* filename, env_config_t* config) {
             // Se la riga non contiene '=', logga l'errore e ritorna -1
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", trimmed);
-            log_event("101", "FILE_PARSING", log_msg);
+            log_event("1011", "FILE_PARSING", log_msg);
             return -1; // Errore: formato non valido
         }
         *eq = '\0';
@@ -64,14 +65,14 @@ int load_env_config(const char* filename, env_config_t* config) {
             // Chiave sconosciuta: logga l'errore e ritorna -1
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore: chiave sconosciuta (%s)", key);
-            log_event("101", "FILE_PARSING", log_msg);
+            log_event("1011", "FILE_PARSING", log_msg);
             return -1; // Errore: chiave sconosciuta
         }
 
         // Logga il caricamento corretto del parametro
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Parametro ambiente (%s) correttamente caricata da file", key);
-        log_event("001", "FILE_PARSING", log_msg);
+        log_event("0011", "FILE_PARSING", log_msg);
     }
     fclose(file); // Chiude il file
     return 0;

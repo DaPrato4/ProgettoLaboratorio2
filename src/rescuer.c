@@ -67,8 +67,8 @@ void* rescuer_thread(void* arg) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s) (%d,%d) (%d)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, stato(r->status), current_em->x, current_em->y, travel_time, r->x, r->y, current_em->x, current_em->y,travel_time);
-        char id [4];
-        snprintf(id, sizeof(id), "0%02d", r->id);
+        char id [5];
+        snprintf(id, sizeof(id), "0%03d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(travel_time); // Simula il tempo di viaggio
 
@@ -82,7 +82,7 @@ void* rescuer_thread(void* arg) {
 
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s) (%d,%d) (%d)] Intervento in corso a (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, stato(r->status), r->x, r->y , emergency_time, r->x, r->y, emergency_time);
-        snprintf(id, sizeof(id), "0%02d", r->id);
+        snprintf(id, sizeof(id), "0%03d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(emergency_time); // Simula il tempo di intervento        
 
@@ -96,7 +96,7 @@ void* rescuer_thread(void* arg) {
             r->rescuer->rescuer_type_name, r->id,current_em->x, current_em->y, r->x, r->y, travel_time);
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s) (%d,%d) (%d)] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, stato(r->status), r->x, r->y, travel_time ,current_em->x, current_em->y, r->x, r->y, travel_time);
-        snprintf(id, sizeof(id), "0%02d", r->id);
+        snprintf(id, sizeof(id), "0%03d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(travel_time); // Simula il tempo di viaggio di ritorno
         
@@ -104,7 +104,7 @@ void* rescuer_thread(void* arg) {
         r->status = IDLE;
         printf("🦺 [RESCUER] ✅ [%s #%d] Intervento completato.\n", r->rescuer->rescuer_type_name, r->id);
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s)] Intervento completato.", r->rescuer->rescuer_type_name, stato(r->status));
-        snprintf(id, sizeof(id), "0%02d", r->id);
+        snprintf(id, sizeof(id), "0%03d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
         pthread_mutex_unlock(&wrapper->mutex);
         

@@ -43,7 +43,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("102", "FILE_PARSING", log_msg);
+        log_event("1021", "FILE_PARSING", log_msg);
         return -1;
     }
     *name_end = '\0';
@@ -56,7 +56,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("102", "FILE_PARSING", log_msg);
+        log_event("1021", "FILE_PARSING", log_msg);
         return -1;
     }
     *num_end = '\0';
@@ -69,7 +69,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("102", "FILE_PARSING", log_msg);
+        log_event("1021", "FILE_PARSING", log_msg);
         return -1;
     }
     *speed_end = '\0';
@@ -82,7 +82,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("102", "FILE_PARSING", log_msg);
+        log_event("1021", "FILE_PARSING", log_msg);
         return -1;
     }
     *base_end = '\0';
@@ -100,7 +100,7 @@ int parse_rescuer_type_line(const char* line, rescuer_type_info_t* out_type_info
         // Se il formato delle coordinate non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("102", "FILE_PARSING", log_msg);
+        log_event("1021", "FILE_PARSING", log_msg);
         return -1;
     }
 
@@ -127,7 +127,8 @@ int load_rescuer_types(
     int* out_count
 ) {
     FILE* file = fopen(filename, "r");
-    CHECK_FOPEN("1020",file, filename);
+    CHECK_FOPEN("1021",file, filename);
+    log_event("0021", "FILE_PARSING", "File di configurazione aperto correttamente");
 
     // Alloca spazio per un massimo di 32 tipi di soccorritore
     *out_types = malloc(sizeof(rescuer_type_info_t) * MAX_RESCUER_TYPES);

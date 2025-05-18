@@ -38,12 +38,12 @@ int main() {
         if(rescuer_types_info[i].rescuer_type.x > env_config.width || rescuer_types_info[i].rescuer_type.y > env_config.height) {
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) fori limiti di mappa", rescuer_types_info[i].rescuer_type.rescuer_type_name);
-            log_event("102", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("1022", "FILE_PARSING", log_msg); // Logga il soccorritore non valido
         }else{
             rescuer_types[i] = rescuer_types_info[i].rescuer_type;
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Soccorritore (%s) correttamente caricata da file", rescuer_types_info[i].rescuer_type.rescuer_type_name);
-            log_event("002", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("0022", "FILE_PARSING", log_msg); // Logga il soccorritore caricato
         }
         
     }
@@ -82,8 +82,8 @@ int main() {
                 rescuers_twin_thread[idx].twin->x,
                 rescuers_twin_thread[idx].twin->y,
                 rescuers_twin_thread[idx].twin->rescuer->rescuer_type_name);
-            char id [4];
-            snprintf(id, sizeof(id), "0%02d", rescuers_twin_thread[idx].twin->id);
+            char id [5];
+            snprintf(id, sizeof(id), "0%03d", rescuers_twin_thread[idx].twin->id);
             log_event(id, "RESCUER_INIT", log_msg); // Logga la creazione del gemello digitale
             idx++;
         }

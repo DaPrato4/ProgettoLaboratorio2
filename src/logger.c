@@ -223,7 +223,7 @@ void send_log_json(const log_msg_t* msg) {
     // Serializza semplice JSON
     char id[32];
     int num = atoi(msg->id);
-    snprintf(id, sizeof(id), "0%02d", num % 100);
+    snprintf(id, sizeof(id), "%03d", num % 1000);
     snprintf(json_msg, sizeof(json_msg),
              "{\"id\":\"%s\", \"event\":\"%s\", %s}\n",
              id, msg->event, mess);

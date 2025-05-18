@@ -20,7 +20,7 @@
 void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
     pthread_mutex_lock(&em->mutex); // Acquisisce il mutex per l'accesso esclusivo
     int status = 0; // Variabile di supporto per controlli di stato
-    char id[4];
+    char id[5];
     switch (new_status)
     {
     case ASSIGNED:
@@ -34,7 +34,7 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
         }
         if (!status) {
             em->status = new_status;
-            snprintf(id, sizeof(id), "0%02d", em->id);
+            snprintf(id, sizeof(id), "0%03d", em->id);
             log_event(id, "EMERGENCY_STATUS", "[ASSIGNED] Stato di emergenza aggiornato");
         }
         break;
@@ -43,7 +43,7 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
         status = (em->status == IN_PROGRESS);
         if (!status) {
             em->status = new_status;
-            snprintf(id, sizeof(id), "0%02d", em->id);
+            snprintf(id, sizeof(id), "0%03d", em->id);
             log_event(id, "EMERGENCY_STATUS", "[IN_PROGRESS] Stato di emergenza aggiornato");
         }
         break;
@@ -58,7 +58,7 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
         }
         if (!status) {
             em->status = new_status;
-            snprintf(id, sizeof(id), "0%02d", em->id);
+            snprintf(id, sizeof(id), "0%03d", em->id);
             log_event(id, "EMERGENCY_STATUS", "[COMPLETED] Stato di emergenza aggiornato ");
             free(em); // Libera la memoria dell'emergenza completata
         }
@@ -66,20 +66,20 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
     case TIMEOUT:
         // Gestione emergenza scaduta per timeout
         em->status = new_status;
-        snprintf(id, sizeof(id), "1%02d", em->id);
+        snprintf(id, sizeof(id), "1%03d", em->id);
         log_event(id, "EMERGENCY_STATUS", "[TIMEOUT] Stato di emergenza aggiornato");
         free(em);
         break;
     case CANCELED:
         // Gestione emergenza annullata
         em->status = new_status;
-        snprintf(id, sizeof(id), "1%02d", em->id);
+        snprintf(id, sizeof(id), "1%03d", em->id);
         log_event(id, "EMERGENCY_STATUS", "[CANCELED] Stato di emergenza aggiornato");
         free(em);
         break;
     default:
         // Gestione stato non valido
-        snprintf(id, sizeof(id), "1%02d", em->id);
+        snprintf(id, sizeof(id), "1%03d", em->id);
         log_event(id, "EMERGENCY_STATUS", "Stato di emergenza non valido");
         free(em);
         break;

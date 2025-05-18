@@ -55,7 +55,7 @@ int parse_emergency_type_line(
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("1003", "FILE_PARSING", log_msg);
+        log_event("1032", "FILE_PARSING", log_msg);
         return -1; // Errore: formato non valido
     };
     *name_end = '\0'; // Termina la stringa del nome
@@ -68,7 +68,7 @@ int parse_emergency_type_line(
         // Se il formato non è valido, logga l'errore e ritorna -1
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Errore: formato non valido (%s)", line);
-        log_event("1003", "FILE_PARSING", log_msg);
+        log_event("1032", "FILE_PARSING", log_msg);
         return -1; // Errore: formato non valido
     }
     *priority_end = '\0'; // Termina la stringa della priorità
@@ -149,7 +149,8 @@ int load_emergency_types(
 ) {
     // Apre il file in lettura
     FILE* file = fopen(filename, "r");
-    CHECK_FOPEN("1030",file, filename);
+    CHECK_FOPEN("1031",file, filename);
+    log_event("0031", "FILE_PARSING", "File di configurazione aperto correttamente");
 
     // Alloca spazio per un massimo di 16 tipi di emergenza
     emergency_type_t* types = malloc(sizeof(emergency_type_t) * MAX_EMERGENCY_TYPES);
@@ -165,12 +166,12 @@ int load_emergency_types(
             // Logga il caricamento corretto dell'emergenza
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Emergenza (%s) correttamente caricata da file", types[count - 1].emergency_desc);
-            log_event("0003", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
+            log_event("0031", "FILE_PARSING", log_msg); // Logga l'emergenza caricata
         }else{
             // Logga l'errore di parsing della riga
             char log_msg[256];
             snprintf(log_msg, sizeof(log_msg), "Errore nel caricamento dell'emergenza da file: (%s)", line);
-            log_event("1003", "FILE_PARSING", log_msg); // Logga l'errore
+            log_event("1031", "FILE_PARSING", log_msg); // Logga l'errore
         }
     }
 
