@@ -329,10 +329,10 @@ function App() {
           />
         </div>
         <div className="flex flex-col">
-          <label htmlFor="Timestamp" className="mb-1">Timestamp (s)</label>
+          <label htmlFor="delay" className="mb-1">delay (s)</label>
           <input
-            id="Timestamp"
-            name="Timestamp"
+            id="delay"
+            name="delay"
             type="number"
             min={0}
             step={1}
@@ -349,7 +349,7 @@ function App() {
         </button>
       </form>
 
-      <div className="flex flex-col xl:flex-row gap-10 w-full justify-center items-center mb-20">
+      <div className="flex flex-col xl:flex-row gap-10 w-full justify-center items-center xl:items-start mb-20">
         <div className="flex flex-col items-center overflow-x-auto px-2">
           <canvas
             ref={canvasRef}

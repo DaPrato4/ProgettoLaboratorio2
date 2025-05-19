@@ -59,6 +59,7 @@ void* scheduler_thread_fun(void* arg) {
                 time_to_manage = req.time_to_manage + travel_time;
             }
         }
+        e->time=time_to_manage; // Salva il tempo stimato per la gestione dell'emergenza
         // Se il tempo di gestione supera il massimo, scarta l'emergenza
         printf("🧭 [SCHEDULER] Tempo di gestione stimato: %d secondi\n", time_to_manage);
         if (max_time > 0 && time_to_manage > max_time) {

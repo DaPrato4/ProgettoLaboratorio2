@@ -8,8 +8,18 @@
 #include "parser_env.h"
 #include "types.h"
 #include "macros.h"
+#include "pthread.h"
 
 #define MAX_NAME_LEN 64
+#define MAX_EMERGENCIES 128
+
+typedef struct {
+    char* name;
+    int x;
+    int y;
+    int delay_sec;
+    mqd_t mq;
+} emergency_to_send;
 
 /**
  * @brief Stampa le modalità d'uso del programma client.
@@ -21,27 +31,35 @@ void print_usage(const char* prog) {
 }
 
 /**
- * @brief Invia una singola emergenza sulla message queue.
- * @param name Nome dell'emergenza.
- * @param x Coordinata X.
- * @param y Coordinata Y.
- * @param delay_sec Delay in secondi.
- * @param mq Descrittore della message queue.
+ * @brief Funzione eseguita da un thread che invia una singola emergenza sulla message queue.
+ * @param arg Puntatore a struct emergency_to_send.
  */
-void send_emergency(const char* name, int x, int y, int delay_sec, mqd_t mq) {
+// void send_emergency(const char* name, int x, int y, int delay_sec, mqd_t mq) {
+void* send_emergency(void* arg) {
+    emergency_to_send* em = (emergency_to_send*)arg;
+    const char* name = strdup(em->name);
+    int x = em->x;
+    int y = em->y;
+    int delay_sec = em->delay_sec;
+    mqd_t mq = em->mq;
+    free(em->name);
+    free(em); // Libera la memoria allocata per l'emergenza
+
     emergency_request_t req;
     memset(&req, 0, sizeof(req));
 
     strncpy(req.emergency_name, name, MAX_NAME_LEN - 1);
     req.x = x;
     req.y = y;
-    req.timestamp = delay_sec;
+    sleep(delay_sec); // Simula il delay
 
     if (mq_send(mq, (char*)&req, sizeof(req), 0) == -1) {
         perror("❌ mq_send");
     } else {
         printf("✅ Emergenza inviata: %s (%d,%d) %d(sec)\n", name, x, y,delay_sec);
     }
+
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]) {
@@ -71,7 +89,9 @@ int main(int argc, char* argv[]) {
         printf("📂 File aperto correttamente.\n");
 
         char line[256];
-        while (fgets(line, sizeof(line), file) != NULL) {
+        int i = 0;
+        pthread_t threads[MAX_EMERGENCIES];
+        while (fgets(line, sizeof(line), file) != NULL && i < MAX_EMERGENCIES) {
             // Rimuove il carattere di nuova linea
             line[strcspn(line, "\n")] = 0;
             char name[MAX_NAME_LEN];
@@ -84,7 +104,14 @@ int main(int argc, char* argv[]) {
             strncpy(name, line, name_end);
             name[name_end-1] = '\0';
             if(sscanf(line + name_end, "%d %d %d", &x, &y, &delay) == 3) {
-                send_emergency(name, x, y, delay, mq);
+                emergency_to_send* em = malloc(sizeof(emergency_to_send));
+                CHECK_MALLOC(em, fail);
+                em->name = strdup(name);
+                em->x = x;
+                em->y = y;
+                em->delay_sec = delay;
+                em->mq = mq;
+                pthread_create(&threads[i++], NULL, send_emergency, (void*)em);
             } else {
                 fprintf(stderr, "❌ Riga ignorata (formato errato): %s\n", line);
                 return 1;
@@ -92,6 +119,12 @@ int main(int argc, char* argv[]) {
         }
 
         fclose(file);
+
+        // Aspetta che tutti i thread finiscano
+        for (int j = 0; j < i; j++) {
+            pthread_join(threads[j], NULL);
+        }
+        
     }
 
     // Modalità singola: invia una sola emergenza
@@ -101,11 +134,23 @@ int main(int argc, char* argv[]) {
         int y = atoi(argv[3]);
         int delay = atoi(argv[4]);
 
-        send_emergency(name, x, y, delay, mq);
+        emergency_to_send* em = malloc(sizeof(emergency_to_send));
+        CHECK_MALLOC(em, fail);
+        em->name = strdup(name);
+        em->x = x;
+        em->y = y;
+        em->delay_sec = delay;
+        em->mq = mq;
+        pthread_t thread;
+        pthread_create(&thread, NULL, send_emergency, (void*)em);
+        pthread_join(thread, NULL); // Aspetta che il thread finisca
+
+        // send_emergency(name, x, y, delay, mq);
     }
 
     else {
         print_usage(argv[0]);  // Stampa l'uso corretto
+        fail:
         mq_close(mq);
         return 1;
     }

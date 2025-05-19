@@ -102,7 +102,6 @@ void* mq_receiver_thread(void* arg) {
                 em->type = emergency_types[i];
                 em->x = req.x;
                 em->y = req.y;
-                em->time = req.timestamp;
                 em->status = WAITING;
                 // Calcola il numero totale di soccorritori richiesti
                 em->rescuer_count = 0;
