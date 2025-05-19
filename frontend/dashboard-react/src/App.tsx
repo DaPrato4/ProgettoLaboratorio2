@@ -9,8 +9,7 @@ type Rescuer = {
   id: number; 
   type: string;
   pos: Pos; 
-  target?: Pos;
-  status?: string
+  status: string
   color?: string
 };
 type Emergency = { 
@@ -18,6 +17,7 @@ type Emergency = {
   type: string;
   pos: Pos; 
   status: string;
+  color?: string
 };
 type Animation = {
   id: number;
@@ -30,6 +30,7 @@ type Animation = {
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [animations, setAnimations] = useState<Animation[]>([]);
+  const colorMapRef = useRef<Record<string, string>>({});
 
   //POSIZIONI DI PROVA TEMPORANEE
   const [emergencies,setEmergencies] = useState<Emergency[]>([]);
@@ -61,7 +62,7 @@ function App() {
     });
   }
 
-
+// "#ef4444"
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -76,12 +77,44 @@ function App() {
       ctx.lineWidth = 2;
       ctx.strokeRect(0, 0, GRID_WIDTH * CELL_SIZE, GRID_HEIGHT * CELL_SIZE);
 
-      emergencies.forEach(({pos}) => {
-        ctx.fillStyle = "#ef4444";
-        ctx.fillRect(pos.x * CELL_SIZE - CELL_SIZE*2, pos.y * CELL_SIZE - CELL_SIZE*2, CELL_SIZE * 5, CELL_SIZE * 5);
+      emergencies.forEach((em) => {
+        ctx.fillStyle = em.color || "#ef4444";
+        const offsetX = -2.5 * CELL_SIZE;
+        const offsetY = -2.5 * CELL_SIZE;
+        ctx.beginPath();
+        ctx.moveTo(em.pos.x * CELL_SIZE - CELL_SIZE*2 + 4 + offsetX, em.pos.y * CELL_SIZE - CELL_SIZE*2 + offsetY);
+        ctx.lineTo(em.pos.x * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 - 4 + offsetX, em.pos.y * CELL_SIZE - CELL_SIZE*2 + offsetY);
+        ctx.quadraticCurveTo(
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + offsetY,
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + 4 + offsetY
+        );
+        ctx.lineTo(em.pos.x * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetX, em.pos.y * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 - 4 + offsetY);
+        ctx.quadraticCurveTo(
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetY,
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 - 4 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetY
+        );
+        ctx.lineTo(em.pos.x * CELL_SIZE - CELL_SIZE*2 + 4 + offsetX, em.pos.y * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetY);
+        ctx.quadraticCurveTo(
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 + offsetY,
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + CELL_SIZE * 10 - 4 + offsetY
+        );
+        ctx.lineTo(em.pos.x * CELL_SIZE - CELL_SIZE*2 + offsetX, em.pos.y * CELL_SIZE - CELL_SIZE*2 + 4 + offsetY);
+        ctx.quadraticCurveTo(
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + offsetY,
+          em.pos.x * CELL_SIZE - CELL_SIZE*2 + 4 + offsetX,
+          em.pos.y * CELL_SIZE - CELL_SIZE*2 + offsetY
+        );
+        ctx.closePath();
+        ctx.fill();
       });
 
-      ctx.fillStyle = "#3b82f6";
       rescuers.forEach(({ pos, color }) => {
         const cx = pos.x * CELL_SIZE + CELL_SIZE / 2;
         const cy = pos.y * CELL_SIZE + CELL_SIZE / 2;
@@ -128,7 +161,6 @@ function App() {
   }, [emergencies, rescuers, animations]);
   
   useEffect(() => {
-  // Sostituisci con l'IP corretto della tua macchina WSL se diverso
   const ws = new WebSocket("ws://172.28.236.125:8080");
 
   ws.onopen = () => console.log("✅ WebSocket connessa a Node.js");
@@ -146,14 +178,12 @@ function App() {
         setRescuers((prev) => {
           if (prev.some((r) => r.id === newId)) return prev;
 
-          const colorMap: Record<string, string> = {
-            ambulanza: "#3b82f6",
-            carabinieri: "#5d2075",
-            pompieri: "#f43f5e",
-            polizia: "#10b981",
-            guardia: "#22d3ee",
-          };
-          const color = colorMap[type] || "#22d3ee";
+          // Usa la mappa globale per assegnare il colore per tipo
+          let color = colorMapRef.current[type];
+          if (!color) {
+            color = "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0");
+            colorMapRef.current[type] = color;
+          }
 
           return [
             ...prev,
@@ -180,6 +210,7 @@ function App() {
               type,
               pos: { x, y },
               status,
+              color: "#ef4444",
             },
           ];
         });
@@ -208,6 +239,9 @@ function App() {
         );
 
         if (status === "TIMEOUT" || status === "COMPLETED") {
+          let t;
+          (status === "TIMEOUT") ? t = "#000" : t = "#00ff00";
+          setEmergencies((prev) => prev.map((e) => (e.id === newId ? { ...e, color:t} : e))); 
           setTimeout(() => {
             setEmergencies((prev) => prev.filter((e) => e.id !== newId)); 
           }, 5000);
@@ -228,21 +262,21 @@ function App() {
     <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-white">
       <h1 className="text-4xl font-bold mb-16">🚨 Emergency Grid Monitor</h1>
 
-      <div className="flex flex-col lg:flex-row gap-10 w-full justify-center items-center lg:items-start">
-        <div className="flex flex-col items-center w-full">
+      <div className="flex flex-col xl:flex-row gap-10 w-full justify-center items-center xl:items-start">
+        <div className="flex flex-col items-center overflow-x-auto px-2">
           <canvas
             ref={canvasRef}
             width={GRID_WIDTH * CELL_SIZE}
             height={GRID_HEIGHT * CELL_SIZE}
-            className="border border-blue-500 rounded-xl bg-neutral-300 mx-auto"
+            className="max-w-full h-auto border border-blue-500 rounded-xl bg-neutral-300"
           />
         </div>
 
-        <div className="flex gap-3.5 mb-2 justify-center">
+        <div className="flex gap-3.5 mb-20 justify-center items-end ml-0">
           <div className="min-w-[350px]">
             <h1 className="text-2xl font-bold mb-4">🚑 Soccorritori</h1>
             <div className=" mb-2">
-              <ul className="flex pr-2">
+              <ul className="flex pr-2 text-center">
                 <li className="w-1/12">ID</li>
                 <li className="w-3/12">Tipo</li>
                 <li className="w-4/12">Posizione</li>
@@ -256,7 +290,7 @@ function App() {
               }}
             >
               {rescuers.map((rescuer) => (
-                <li key={rescuer.id} className="mb-2 flex">
+                <li key={rescuer.id} className="mb-2 flex rounded-lg p-2 text-center" style={{ backgroundColor: rescuer.color }}>
                   <span className="w-1/12">{rescuer.id}</span>
                   <span className="w-3/12">{rescuer.type}</span>
                   <span className="w-4/12">({rescuer.pos.x.toFixed(1)}, {rescuer.pos.y.toFixed(1)})</span>
@@ -269,7 +303,7 @@ function App() {
           <div className="min-w-[350px]">
             <h1 className="text-2xl font-bold mb-4">🚨 Emergenze attive</h1>
             <div className=" mb-2">
-              <ul className="flex">
+              <ul className="flex text-center">
                 <li className="w-1/12">ID</li>
                 <li className="w-3/12">Tipo</li>
                 <li className="w-4/12">Posizione</li>
@@ -284,13 +318,13 @@ function App() {
               }}
             >
               {emergencies.map((emergency) => (
-                <li key={emergency.id} className="mb-2 flex">
+                <li key={emergency.id} className="mb-2 flex bg-amber-600 rounded-lg p-2 text-center">
                   <span className="w-1/12">{emergency.id}</span>
                   <span className="w-3/12">{emergency.type}</span>
                   <span className="w-4/12">
                     ({emergency.pos.x.toFixed(1)}, {emergency.pos.y.toFixed(1)})
                   </span>
-                  <span className="w-4/12">{emergency.status}</span>
+                  <span className="w-4/12 p-1 rounded-lg border-1 border-blue-800" style={{ backgroundColor: emergency.color }}>{emergency.status}</span>
                 </li>
               ))}
             </ul>
