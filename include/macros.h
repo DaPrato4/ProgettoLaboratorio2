@@ -31,7 +31,7 @@
         if ((mq) == (mqd_t)-1) { \
             char log_msg[256]; \
             snprintf(log_msg, sizeof(log_msg), "Errore aprendo coda %s: %s", qname, strerror(errno)); \
-            log_event("1030", "MESSAGE_QUEUE", log_msg); \
+            log_event("1100", "MESSAGE_QUEUE", log_msg); \
             pthread_exit(NULL); \
         } \
     } while(0)
