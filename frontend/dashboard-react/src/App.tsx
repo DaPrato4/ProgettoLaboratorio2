@@ -31,6 +31,7 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [animations, setAnimations] = useState<Animation[]>([]);
   const colorMapRef = useRef<Record<string, string>>({});
+  const wsRef = useRef<WebSocket | null>(null);
 
   //POSIZIONI DI PROVA TEMPORANEE
   const [emergencies,setEmergencies] = useState<Emergency[]>([]);
@@ -162,6 +163,7 @@ function App() {
   
   useEffect(() => {
   const ws = new WebSocket("ws://172.28.236.125:8080");
+  wsRef.current = ws;
 
   ws.onopen = () => console.log("✅ WebSocket connessa a Node.js");
   ws.onclose = () => console.warn("❌ WebSocket chiusa");
@@ -260,9 +262,94 @@ function App() {
 
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-white">
-      <h1 className="text-4xl font-bold mb-16">🚨 Emergency Grid Monitor</h1>
+      <h1 className="text-4xl font-bold mb-6 mt-6">🚨 Emergency Grid Monitor</h1>
 
-      <div className="flex flex-col xl:flex-row gap-10 w-full justify-center items-center xl:items-start">
+      
+      <form
+        className="flex flex-row gap-4 mb-8 items-end bg-blue-600 p-4 rounded-2xl border-red-600 border-2"
+        onSubmit={e => {
+          e.preventDefault();
+          const form = e.target as HTMLFormElement;
+          const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+          const x = (form.elements.namedItem('x') as HTMLInputElement).value;
+          const y = (form.elements.namedItem('y') as HTMLInputElement).value;
+          const delay = (form.elements.namedItem('delay') as HTMLInputElement).value;
+
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({
+              event: "EMERGENCY_CREATE",
+              name,
+              x,
+              y,
+              delay,
+            }));
+          } else {
+            alert("WebSocket non connessa!");
+          }
+          form.reset();
+        }}
+      >
+        <div className="flex flex-col">
+          <label htmlFor="name" className="mb-1">Tipo emergenza</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            required
+            className="rounded px-2 py-1 text-black bg-blue-300 border-1 border-blue-800"
+            placeholder="Blackout"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="x" className="mb-1">X</label>
+          <input
+            id="x"
+            name="x"
+            type="number"
+            min={0}
+            max={GRID_WIDTH}
+            step={1}
+            required
+            className="rounded px-2 py-1 text-black bg-blue-300 border-1 border-blue-800"
+            placeholder="150"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="y" className="mb-1">Y</label>
+          <input
+            id="y"
+            name="y"
+            type="number"
+            min={0}
+            max={GRID_HEIGHT}
+            step={1}
+            required
+            className="rounded px-2 py-1 text-black bg-blue-300 border-1 border-blue-800"
+            placeholder="100"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="Timestamp" className="mb-1">Timestamp (s)</label>
+          <input
+            id="Timestamp"
+            name="Timestamp"
+            type="number"
+            min={0}
+            step={1}
+            required
+            className="rounded px-2 py-1 text-black bg-blue-300 border-1 border-blue-800"
+            placeholder="600"
+          />
+        </div>
+        <button
+          type="submit"
+          className="bg-blue-900 hover:bg-red-600 text-white font-bold py-2 px-6 rounded"
+        >
+          Crea emergenza
+        </button>
+      </form>
+
+      <div className="flex flex-col xl:flex-row gap-10 w-full justify-center items-center mb-20">
         <div className="flex flex-col items-center overflow-x-auto px-2">
           <canvas
             ref={canvasRef}
@@ -272,7 +359,7 @@ function App() {
           />
         </div>
 
-        <div className="flex gap-3.5 mb-20 justify-center items-end ml-0">
+        <div className="flex gap-3.5 justify-center items-start">
           <div className="min-w-[350px]">
             <h1 className="text-2xl font-bold mb-4">🚑 Soccorritori</h1>
             <div className=" mb-2">
@@ -331,6 +418,7 @@ function App() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

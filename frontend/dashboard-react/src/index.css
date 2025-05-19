@@ -12,3 +12,15 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Nasconde le frecce degli input type=number su Chrome, Safari, Edge */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Nasconde le frecce su Firefox */
+input[type=number] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
