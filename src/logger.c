@@ -119,7 +119,6 @@ void log_event(const char* id, const char* event, const char* message) {
     pthread_mutex_unlock(&log_mutex); // Sblocca il mutex
 }
 
-
 // AGGIUNTE PER INVIO MESSAGGI A SERVER TCP
 
 /**

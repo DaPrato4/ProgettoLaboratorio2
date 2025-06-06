@@ -29,10 +29,9 @@
 #define CHECK_MQ_OPEN(mq, qname) \
     do { \
         if ((mq) == (mqd_t)-1) { \
-            char log_msg[256]; \
-            snprintf(log_msg, sizeof(log_msg), "Errore aprendo coda %s: %s", qname, strerror(errno)); \
-            log_event("1100", "MESSAGE_QUEUE", log_msg); \
-            pthread_exit(NULL); \
+            printf("Errore aprendo coda %s: %s\n", qname, strerror(errno)); \
+            printf("Avviare prima \"main\" poi \"client\"\n"); \
+            exit(EXIT_FAILURE); \
         } \
     } while(0)
 
