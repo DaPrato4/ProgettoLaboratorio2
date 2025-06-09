@@ -1,6 +1,6 @@
 #include "types.h"
 #include "logger.h"
-#include <pthread.h>
+#include <threads.h>
 #include <stdlib.h>
 
 //Aggiungo un mutex alla struct di emergenza per gestire l' accesso concorrente senza dover bloccare tutti i soccorritori
@@ -18,7 +18,7 @@
  * - Utilizzare un mutex per garantire la mutua esclusione sull'emergenza.
  */
 void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
-    pthread_mutex_lock(&em->mutex); // Acquisisce il mutex per l'accesso esclusivo
+    mtx_lock(&em->mutex); // Acquisisce il mutex per l'accesso esclusivo
     int status = 0; // Variabile di supporto per controlli di stato
     char id[5];
     switch (new_status)
@@ -84,5 +84,5 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
         free(em);
         break;
     }
-    pthread_mutex_unlock(&em->mutex); // Rilascia il mutex
+    mtx_unlock(&em->mutex); // Rilascia il mutex
 }

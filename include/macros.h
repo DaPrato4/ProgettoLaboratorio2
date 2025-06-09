@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <pthread.h>
+#include <threads.h>
 #include <errno.h>
 #include "logger.h"
 

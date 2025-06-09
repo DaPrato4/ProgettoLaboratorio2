@@ -1,11 +1,11 @@
 #include "types.h"
-#include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include "logger.h"
 #include "emergency_status.h"
+#include <threads.h>
 
 /**
  * @brief Restituisce una stringa rappresentativa dello stato del soccorritore.
@@ -28,18 +28,18 @@ char* stato(rescuer_status_t status) {
  * @param arg Puntatore a rescuer_thread_t.
  * @return NULL.
  */
-void* rescuer_thread(void* arg) {
+int rescuer_thread(void* arg) {
     // Cast del parametro arg a un puntatore a struttura rescuer_thread_t
     rescuer_thread_t* wrapper = (rescuer_thread_t*)arg; 
     rescuer_digital_twin_t* r = wrapper->twin;
 
     while (1) {
-        pthread_mutex_lock(&wrapper->mutex);
+        mtx_lock(&wrapper->mutex);
         // Attende di essere assegnato a una nuova emergenza
         while (r->status == IDLE) {
-            pthread_cond_wait(&wrapper->cond, &wrapper->mutex);
+            cnd_wait(&wrapper->cond, &wrapper->mutex);
         }
-        pthread_mutex_unlock(&wrapper->mutex);
+        mtx_unlock(&wrapper->mutex);
 
         emergency_t* current_em = wrapper->current_em;
 
@@ -59,7 +59,7 @@ void* rescuer_thread(void* arg) {
         // Tempo di intervento specifico per il tipo di soccorritore
         int emergency_time = current_em->type.rescuers[index].time_to_manage;
 
-        pthread_mutex_lock(&wrapper->mutex);
+        mtx_lock(&wrapper->mutex);
         // Aggiorna stato: partenza verso il luogo dell'emergenza
         r->status = EN_ROUTE_TO_SCENE;
         printf("🦺 [RESCUER] 🚀 [(%s) (%s)] Partenza verso il luogo dell'emergenza (%d,%d) -> (%d,%d) in %d sec.\n",
@@ -106,12 +106,12 @@ void* rescuer_thread(void* arg) {
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s)] Intervento completato.", r->rescuer->rescuer_type_name, stato(r->status));
         snprintf(id, sizeof(id), "0%03d", r->id);
         log_event(id, "RESCUER_STATUS", log_msg);
-        pthread_mutex_unlock(&wrapper->mutex);
+        mtx_unlock(&wrapper->mutex);
         
         wrapper->current_em = NULL;
     }
 
-    return NULL;
+    return 0;
 }
 
 /**
@@ -119,7 +119,7 @@ void* rescuer_thread(void* arg) {
  * @param rescuer_wrapped Puntatore a rescuer_thread_t da avviare.
  */
 void start_rescuer(rescuer_thread_t* rescuer_wrapped) {
-    pthread_mutex_init(&rescuer_wrapped->mutex, NULL);
-    pthread_cond_init(&rescuer_wrapped->cond, NULL);
-    pthread_create(&rescuer_wrapped->thread, NULL, rescuer_thread, rescuer_wrapped);
+    mtx_init(&rescuer_wrapped->mutex, mtx_plain);
+    cnd_init(&rescuer_wrapped->cond);
+    thrd_create(&rescuer_wrapped->thread, rescuer_thread, rescuer_wrapped);
 }

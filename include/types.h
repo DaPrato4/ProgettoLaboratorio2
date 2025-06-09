@@ -2,7 +2,7 @@
 #define TYPES_H
 
 #include <time.h>
-#include <pthread.h>
+#include <threads.h>
 #define EMERGENCY_NAME_LENGTH 64
 #define MAX_QUEUE_NAME 16
 
@@ -111,7 +111,7 @@ typedef struct {
     time_t time;                               ///< Tempo di inizio della gestione
     int rescuer_count;                         ///< Numero di soccorritori assegnati
     rescuer_digital_twin_t** rescuers_dt;      ///< Puntatore all’elenco dei soccorritori assegnati
-    pthread_mutex_t mutex;                     ///< Mutex per la sincronizzazione dell'accesso         
+    mtx_t mutex;                     ///< Mutex per la sincronizzazione dell'accesso         
 } emergency_t;
 
 //AGGIUNTI
@@ -133,9 +133,9 @@ typedef struct {
  */
 typedef struct {
     rescuer_digital_twin_t* twin;     // Gemello digitale originale
-    pthread_mutex_t mutex;            // Mutex personale
-    pthread_cond_t cond;              // Condition var personale
-    pthread_t thread;                 // Thread associato
+    mtx_t mutex;            // Mutex personale
+    cnd_t cond;              // Condition var personale
+    thrd_t thread;                 // Thread associato
     emergency_t* current_em;          // Emergenza corrente
 } rescuer_thread_t;
 

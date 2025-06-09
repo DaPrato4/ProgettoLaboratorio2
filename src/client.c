@@ -8,7 +8,7 @@
 #include "parser_env.h"
 #include "types.h"
 #include "macros.h"
-#include "pthread.h"
+#include <threads.h>
 
 #define MAX_NAME_LEN 64
 #define MAX_EMERGENCIES 128
@@ -35,7 +35,7 @@ void print_usage(const char* prog) {
  * @param arg Puntatore a struct emergency_to_send.
  */
 // void send_emergency(const char* name, int x, int y, int delay_sec, mqd_t mq) {
-void* send_emergency(void* arg) {
+int send_emergency(void* arg) {
     emergency_to_send* em = (emergency_to_send*)arg;
     const char* name = strdup(em->name);
     int x = em->x;
@@ -59,7 +59,7 @@ void* send_emergency(void* arg) {
         printf("✅ Emergenza inviata: %s (%d,%d) %d(sec)\n", name, x, y,delay_sec);
     }
 
-    pthread_exit(NULL);
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 
         char line[256];
         int i = 0;
-        pthread_t threads[MAX_EMERGENCIES];
+        thrd_t threads[MAX_EMERGENCIES];
         while (fgets(line, sizeof(line), file) != NULL && i < MAX_EMERGENCIES) {
             // Rimuove il carattere di nuova linea
             line[strcspn(line, "\n")] = 0;
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
                 em->y = y;
                 em->delay_sec = delay;
                 em->mq = mq;
-                pthread_create(&threads[i++], NULL, send_emergency, (void*)em);
+                thrd_create(&threads[i++], send_emergency, (void*)em);
             } else {
                 fprintf(stderr, "❌ Riga ignorata (formato errato): %s\n", line);
                 return 1;
@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
 
         // Aspetta che tutti i thread finiscano
         for (int j = 0; j < i; j++) {
-            pthread_join(threads[j], NULL);
+            thrd_join(threads[j], NULL);
         }
         
     }
@@ -141,9 +141,9 @@ int main(int argc, char* argv[]) {
         em->y = y;
         em->delay_sec = delay;
         em->mq = mq;
-        pthread_t thread;
-        pthread_create(&thread, NULL, send_emergency, (void*)em);
-        pthread_join(thread, NULL); // Aspetta che il thread finisca
+        thrd_t thread;
+        thrd_create(&thread, send_emergency, (void*)em);
+        thrd_join(thread, NULL); // Aspetta che il thread finisca
 
         // send_emergency(name, x, y, delay, mq);
     }

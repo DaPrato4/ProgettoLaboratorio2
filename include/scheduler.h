@@ -10,7 +10,7 @@
  * 
  * @param arg Puntatore a una struttura contenente tutti i soccorritori e il numero degli stessi (scheduler_args_t).
  */
-void* scheduler_thread_fun(void* arg);
+int scheduler_thread_fun(void* arg);
 
 /**
  * Struct contenente dati da passare allo scheduler
@@ -20,4 +20,4 @@ typedef struct {
     int rescuer_count;
 } scheduler_args_t;
 
-#endif 
+#endif

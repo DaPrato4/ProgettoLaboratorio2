@@ -1,7 +1,6 @@
 #include "mq_receiver.h"
 #include "types.h"
 #include "emergency_queue.h"
-#include <pthread.h>
 #include <mqueue.h>
 #include <string.h>
 #include <stdio.h>
@@ -10,6 +9,7 @@
 #include <time.h>
 #include "logger.h"
 #include "macros.h"
+#include <threads.h>
 
 #define MAX_MSG_SIZE sizeof(emergency_request_t)
 
@@ -28,7 +28,7 @@ struct mq_receiver_args {
  * @param arg Puntatore a struct mq_receiver_args.
  * @return NULL.
  */
-void* mq_receiver_thread(void* arg) {
+int mq_receiver_thread(void* arg) {
     mqd_t mq;
     emergency_request_t req;
 
@@ -110,7 +110,7 @@ void* mq_receiver_thread(void* arg) {
                 }
                 em->rescuers_dt = malloc(em->rescuer_count * sizeof(rescuer_digital_twin_t));
                 em->id = id++; // Assegna un ID univoco all'emergenza
-                pthread_mutex_init(&em->mutex, NULL); // Inizializza il mutex
+                mtx_init(&em->mutex, mtx_plain); // Inizializza il mutex
                 emergency_queue_add(em);    // Aggiunge l'emergenza alla coda interna
             }
 
@@ -124,7 +124,7 @@ void* mq_receiver_thread(void* arg) {
 
 fail:
     mq_close(mq);
-    pthread_exit(NULL);
+    return 0;
 }
 
 /**
@@ -134,7 +134,7 @@ fail:
  * @param env_data Puntatore alla configurazione ambiente.
  * @param thread Puntatore al thread da avviare.
  */
-void start_mq_receiver_thread(emergency_type_t emergency_types[], int emergency_count, env_config_t* env_data, pthread_t* thread) {
+void start_mq_receiver_thread(emergency_type_t emergency_types[], int emergency_count, env_config_t* env_data, thrd_t* thread) {
 
     struct mq_receiver_args* args = malloc(sizeof(struct mq_receiver_args));
     CHECK_MALLOC(args, fail);
@@ -143,7 +143,7 @@ void start_mq_receiver_thread(emergency_type_t emergency_types[], int emergency_
     args->env_data = env_data;
 
     printf("📨 [MQ] Avvio thread ricevitore coda: /%s\n", env_data->queue);
-    pthread_create(thread, NULL, mq_receiver_thread, args);
+    thrd_create(thread, mq_receiver_thread, args);
     return;
     fail:
     free(args);

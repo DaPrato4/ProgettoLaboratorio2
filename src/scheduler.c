@@ -7,6 +7,7 @@
 #include "logger.h"
 #include "emergency_status.h"
 #include "macros.h"
+#include <threads.h>
 
 /**
  * @brief Funzione eseguita dal thread scheduler.
@@ -14,7 +15,7 @@
  * @param arg Puntatore a scheduler_args_t.
  * @return NULL.
  */
-void* scheduler_thread_fun(void* arg) {
+int scheduler_thread_fun(void* arg) {
     scheduler_args_t* args = (scheduler_args_t*)arg;
     rescuer_thread_t* rescuers = args->rescuers;
     int rescuer_count = args->rescuer_count;
@@ -90,7 +91,7 @@ void* scheduler_thread_fun(void* arg) {
                 perror("❌ Errore realloc");
                 // free(digital_twins_selected);
                 digital_twins_selected = NULL;
-                return NULL; // O gestisci l'errore
+                return 1; // O gestisci l'errore
             }
             digital_twins_selected = temp;
 
@@ -139,11 +140,11 @@ void* scheduler_thread_fun(void* arg) {
             // Risveglia i soccorritori assegnati e aggiorna i loro stati
             for (int j = 0; j < assigned; j++) {
                 rescuer_digital_twin_t* r = digital_twins_selected[j];
-                pthread_mutex_lock(&rescuers[r->id].mutex);
+                mtx_lock(&rescuers[r->id].mutex);
                 r->status = EN_ROUTE_TO_SCENE;
                 rescuers[r->id].current_em = e;
-                pthread_mutex_unlock(&rescuers[r->id].mutex);
-                pthread_cond_signal(&rescuers[r->id].cond);
+                mtx_unlock(&rescuers[r->id].mutex);
+                cnd_signal(&rescuers[r->id].cond);
                 strcat(rescuers_assigned, rescuers[r->id].twin->rescuer->rescuer_type_name);
                 if(j != assigned-1) strcat(rescuers_assigned, ", ");
             }
@@ -158,6 +159,6 @@ void* scheduler_thread_fun(void* arg) {
 
     }
 
-    return NULL;
+    return 0;
 
 }

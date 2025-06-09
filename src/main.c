@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <threads.h>
 #include "logger.h"
 #include "macros.h"
 
@@ -93,7 +93,7 @@ int main() {
     emergency_queue_init(); // Inizializza la coda delle emergenze
 
     // ------ AVVIO THREAD MQ RECEIVER ------
-    pthread_t mq_thread;
+    thrd_t mq_thread;
     start_mq_receiver_thread(emergency_types, emergency_count, &env_config, &mq_thread);
 
     // ------ AVVIO THREAD SCHEDULER ------
@@ -101,11 +101,11 @@ int main() {
     CHECK_MALLOC(args, label);
     args->rescuer_count = total_rescuers;
     args->rescuers = rescuers_twin_thread;
-    pthread_t scheduler_thread;
-    pthread_create(&scheduler_thread, NULL, scheduler_thread_fun, args);
+    thrd_t scheduler_thread;
+    thrd_create(&scheduler_thread, scheduler_thread_fun, args);
 
     // Attende la fine del thread scheduler (il programma resta attivo)
-    pthread_join(scheduler_thread, NULL);
+    thrd_join(scheduler_thread, NULL);
     label:
     printf("❌ Errore durante l'esecuzione del programma\n");
     free(args);
