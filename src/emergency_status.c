@@ -61,6 +61,7 @@ void update_emergency_status(emergency_t* em, emergency_status_t new_status) {
             snprintf(id, sizeof(id), "0%03d", em->id);
             log_event(id, "EMERGENCY_STATUS", "[COMPLETED] Stato di emergenza aggiornato ");
             free(em); // Libera la memoria dell'emergenza completata
+            return; // Esce dalla funzione dopo aver liberato la memoria
         }
         break;
     case TIMEOUT:

@@ -90,13 +90,15 @@ int rescuer_thread(void* arg) {
         r->x = r->rescuer->x;
         r->y = r->rescuer->y;
         r->status = RETURNING_TO_BASE;
-        update_emergency_status(current_em, COMPLETED);
-    
+
         printf("🦺 [RESCUER] 🏡 [%s #%d] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.\n",
             r->rescuer->rescuer_type_name, r->id,current_em->x, current_em->y, r->x, r->y, travel_time);
         snprintf(log_msg, sizeof(log_msg), "[(%s) (%s) (%d,%d) (%d)] Rientrato alla base (%d,%d) -> (%d,%d) in %d sec.",
             r->rescuer->rescuer_type_name, stato(r->status), r->x, r->y, travel_time ,current_em->x, current_em->y, r->x, r->y, travel_time);
         snprintf(id, sizeof(id), "0%03d", r->id);
+        update_emergency_status(current_em, COMPLETED);
+        wrapper->current_em = NULL;
+
         log_event(id, "RESCUER_STATUS", log_msg);
         sleep(travel_time); // Simula il tempo di viaggio di ritorno
         
@@ -108,7 +110,6 @@ int rescuer_thread(void* arg) {
         log_event(id, "RESCUER_STATUS", log_msg);
         mtx_unlock(&wrapper->mutex);
         
-        wrapper->current_em = NULL;
     }
 
     return 0;
