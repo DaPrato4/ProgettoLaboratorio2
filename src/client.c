@@ -52,6 +52,7 @@ int send_emergency(void* arg) {
     req.x = x;
     req.y = y;
     sleep(delay_sec); // Simula il delay
+    req.timestamp = time(NULL); // Imposta il timestamp corrente
 
     if (mq_send(mq, (char*)&req, sizeof(req), 0) == -1) {
         perror("❌ mq_send");

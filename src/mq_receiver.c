@@ -59,10 +59,14 @@ int mq_receiver_thread(void* arg) {
     while (1) {
         ssize_t bytes = mq_receive(mq, (char*)&req, MAX_MSG_SIZE, NULL);
         if (bytes > 0) {
-            printf("📨 [MQ] Ricevuta emergenza: %s (%d,%d)\n", req.emergency_name, req.x, req.y);
+            printf("📨 [MQ] Ricevuta emergenza: %s (%d,%d) %ld\n", req.emergency_name, req.x, req.y, req.timestamp);
+            
             // Logga l'evento di ricezione
+            char buffer[30];
+            struct tm* tm_info = localtime(&req.timestamp);
+            strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_info);
             char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Ricevuta emergenza: %s luogo:(%d,%d) ora:%ld", req.emergency_name, req.x, req.y, (long)&req.timestamp);
+            snprintf(log_msg, sizeof(log_msg), "Ricevuta emergenza: %s luogo:(%d,%d) ora:%s", req.emergency_name, req.x, req.y, buffer);
             log_event("0110", "MESSAGE_QUEUE", log_msg);
 
             // Controlla se le coordinate sono valide

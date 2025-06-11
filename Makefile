@@ -11,7 +11,7 @@ SRC_MAIN = src/main.c src/parser_emergency.c src/parser_env.c src/parser_rescuer
 SRC_CLIENT = src/client.c src/parser_env.c src/logger.c
 
 # Percorso dell'eseguibile principale
-MAIN = build/eseguibile
+MAIN = build/main
 
 # Percorso dell'eseguibile client
 CLIENT = build/client
